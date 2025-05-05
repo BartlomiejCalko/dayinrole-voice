@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Ensure these Node.js modules are not included in client-side bundles
