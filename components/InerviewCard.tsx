@@ -31,7 +31,7 @@ const InerviewCard = ({ interviewId, userId, role, type, techstack, createdAt }:
                         </div>
                     </div>
                     <p className="line-clamp-2 mt-5">
-                        {feedback?.finalAssessment || "You taken an interview yet. Take it now to improve your skills."}
+                        {feedback?.finalAssessment || "You haven't taken an interview yet. Take it now to improve your skills."}
                     </p>
                 </div>
                 <div className="flex flex-row justify-between">
