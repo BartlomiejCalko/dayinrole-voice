@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const DayInRoleForm = ({ onSubmit, isLoading = false }: DayInRoleFormProps) => {
   const [jobOfferText, setJobOfferText] = useState("");

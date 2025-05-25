@@ -1,6 +1,10 @@
 "use client";
 
 import { Hero } from '@/components/sections/Hero'
+import { Features } from '@/components/sections/Features'
+import { HowItWorks } from '@/components/sections/HowItWorks'
+import { Benefits } from '@/components/sections/Benefits'
+import { Footer } from '@/components/sections/Footer'
 import { Navbar } from '@/components/shared/navbar'
 import { useAuthGuard } from '@/lib/hooks/use-auth-guard'
 
@@ -22,6 +26,10 @@ const HomePage = () => {
     <div className="min-h-screen">
       <Navbar />
       <Hero />
+      <Features />
+      <HowItWorks />
+      <Benefits />
+      <Footer />
     </div>
   )
 }

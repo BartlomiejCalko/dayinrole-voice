@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Icons } from "@/components/shared/icons";
-import { SwitchModeToggle } from "@/components/shared/switch-mode-toggle";
+//import { SwitchModeToggle } from "@/components/shared/switch-mode-toggle";
 import { ModeToggle } from "./mode-toggle";
 
 const routes = [
