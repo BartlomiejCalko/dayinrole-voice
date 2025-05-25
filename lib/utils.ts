@@ -41,6 +41,21 @@ export const getTechLogos = async (techArray: string[]) => {
   return results;
 };
 
+// Synchronous version for client components
+export const getTechLogosSync = (techArray: string[]) => {
+  return techArray.map((tech) => {
+    const normalized = normalizeTechName(tech);
+    const url = normalized 
+      ? `${techIconBaseURL}/${normalized}/${normalized}-original.svg`
+      : "/tech.svg";
+    
+    return {
+      tech,
+      url,
+    };
+  });
+};
+
 export const getRandomInterviewCover = () => {
   const randomIndex = Math.floor(Math.random() * interviewCovers.length);
   return `/covers${interviewCovers[randomIndex]}`;
