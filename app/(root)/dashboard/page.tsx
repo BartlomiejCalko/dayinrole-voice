@@ -4,20 +4,15 @@ import { Button } from '@/components/ui/button'
 import { dummyInterviews } from '@/constants'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useEffect } from 'react'
+import React from 'react'
 import InterviewCard from '@/components/InerviewCard'
-import { useAuth } from '@/lib/auth-context'
-import { useRouter } from 'next/navigation'
+import { useAuthGuard } from '@/lib/hooks/use-auth-guard'
 
 const DashboardPage = () => {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/sign-in');
-    }
-  }, [user, loading, router]);
+  const { user, loading } = useAuthGuard({
+    requireAuth: true,
+    enableRedirect: true
+  });
 
   // Show loading state while checking authentication
   if (loading) {

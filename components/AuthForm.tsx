@@ -58,7 +58,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
         }
 
         toast.success("Account created successfully");
-        router.push("/sign-in");
+        router.replace("/sign-in");
       } else {
 
         const { email, password } = values;
@@ -77,7 +77,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
         });
 
         toast.success("Signed in successfully");
-        router.push("/dashboard");
+        // Don't manually redirect - let useAuthGuard handle it
       }
     } catch (error) {
       console.log(error);

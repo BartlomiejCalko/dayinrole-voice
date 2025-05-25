@@ -62,7 +62,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
-    await firebaseSignOut(auth);
+    try {
+      // Import the server action
+      const { signOut: serverSignOut } = await import('@/lib/actions/auth.action');
+      
+      // Clear server-side session first
+      await serverSignOut();
+      
+      // Then clear client-side auth
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Still try to sign out from Firebase even if server signOut fails
+      await firebaseSignOut(auth);
+    }
   };
 
   const value = {

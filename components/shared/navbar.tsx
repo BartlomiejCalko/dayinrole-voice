@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Icons } from "@/components/shared/icons";
-import { ModeToggle } from "@/components/shared/mode-toggle";
+import { SwitchModeToggle } from "@/components/shared/switch-mode-toggle";
+import { ModeToggle } from "./mode-toggle";
 
 const routes = [
   {
@@ -35,12 +36,22 @@ const routes = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, loading, signOut } = useAuth();
   const isAuthenticated = !!user;
 
   const handleSignOut = async () => {
     try {
+      // Import the server action
+      const { signOut: serverSignOut } = await import('@/lib/actions/auth.action');
+      
+      // Clear server-side session first
+      await serverSignOut();
+      
+      // Then clear client-side auth
       await signOut();
+      
+      router.replace("/");
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -123,7 +134,7 @@ export function Navbar() {
           ) : (
             <div className="flex items-center space-x-3">
               <Button asChild variant="outline" size="sm">
-                <Link href="/sign-in">Login</Link>
+                <Link href="/sign-in">Sign in</Link>
               </Button>
               <Button asChild size="sm" className="">
                 <Link href="/sign-in">
