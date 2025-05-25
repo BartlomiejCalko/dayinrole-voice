@@ -23,7 +23,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${monaSans.className} antialiased pattern`}
+        className={`${monaSans.className} antialiased`}
       >
         <Providers>
           {children}

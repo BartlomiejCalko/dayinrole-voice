@@ -89,20 +89,23 @@ const AuthForm = ({ type }: { type: FormType }) => {
   const isSignIn = type === "sign-in";
 
   return (
-    <div className="card-border lg:min-w-[566px]">
-      <div className="flex flex-col gap-6 card py-14 px-10">
-        <div className="flex flex-row gap-2 justify-center">
-          <Image src="/logo.svg" alt="Logo" width={38} height={32} />
-          <h2 className="text-primary-100">dayinrole Voice</h2>
+    <div className="w-full max-w-md mx-auto">
+      <div className="bg-card/50 dark:bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 shadow-2xl">
+        {/* Logo and branding */}
+        <div className="flex flex-col items-center gap-4 mb-8">
+          <div className="flex items-center gap-2">
+            <Image src="/logo.svg" alt="Logo" width={32} height={32} />
+            <h2 className="text-xl font-bold text-foreground">dayinrole</h2>
+          </div>
+          <p className="text-sm text-muted-foreground text-center">
+            Imagine day-in-role before you enter the office
+          </p>
         </div>
-        <h3 className="text-primary-200 text-md">
-          Imagine day-in-role before you enter the office
-        </h3>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="w-full space-y-6 mt-4 form"
+            className="space-y-6"
           >
             {!isSignIn && (
               <FormField
@@ -127,16 +130,17 @@ const AuthForm = ({ type }: { type: FormType }) => {
               type="password"
             />
 
-            <Button type="submit" className="btn">
+            <Button type="submit" className="w-full" size="lg">
               {isSignIn ? "Sign In" : "Create an account"}
             </Button>
           </form>
         </Form>
-        <p className="text-center">
+        
+        <p className="text-center text-sm text-muted-foreground mt-6">
           {isSignIn ? "Don't have an account?" : "Already have an account?"}
           <Link
             href={!isSignIn ? "/sign-in" : "/sign-up"}
-            className="font-bold text-user-primary ml-1"
+            className="font-medium text-primary hover:text-primary/80 ml-1 transition-colors"
           >
             {!isSignIn ? "Sign In" : "Sign Up"}
           </Link>

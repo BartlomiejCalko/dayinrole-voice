@@ -37,7 +37,7 @@ const InerviewCard = ({ interviewId, role, type, techstack, createdAt }: Omit<In
                 <div className="flex flex-row justify-between items-center">
                     <DisplayTechIcons techStack={techstack}/>
 
-                    <Button className="btn-primary">
+                    <Button size="sm">
                         <Link href={feedback ? `/interview/${interviewId}/feedback` : `/interview/${interviewId}`}>
                             {feedback ? "Check Feedback" : "View Interview"}
                         </Link>

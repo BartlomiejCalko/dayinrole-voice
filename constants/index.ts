@@ -136,7 +136,7 @@ Be professional, yet warm and welcoming:
 Use official yet friendly language.
 Keep responses concise and to the point (like in a real voice interview).
 Avoid robotic phrasing—sound natural and conversational.
-Answer the candidate’s questions professionally:
+Answer the candidate's questions professionally:
 
 If asked about the role, company, or expectations, provide a clear and relevant answer.
 If unsure, redirect the candidate to HR for more details.
@@ -204,27 +204,37 @@ export const interviewCovers = [
   "/yahoo.png",
 ];
 
-export const dummyInterviews: Interview[] = [
+export const dummyDayInRoles: DayInRole[] = [
   {
     id: "1",
     userId: "user1",
-    role: "Frontend Developer",
-    type: "Technical",
+    companyName: "TechCorp",
+    position: "Frontend Developer",
+    description: "Start your day with a team standup at 9 AM, discussing yesterday's progress and today's goals. Spend the morning implementing new React components and fixing UI bugs. After lunch, collaborate with designers on upcoming features and participate in code reviews. End the day by updating project documentation and planning tomorrow's tasks.",
+    challenges: [
+      "Challenge 1: Optimize component performance for large datasets",
+      "Challenge 2: Implement responsive design across multiple devices", 
+      "Challenge 3: Debug complex state management issues"
+    ],
+    requirements: ["React", "TypeScript", "CSS", "Git"],
     techstack: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-    level: "Junior",
-    questions: ["What is React?"],
-    finalized: false,
     createdAt: "2024-03-15T10:00:00Z",
+    coverImage: "/covers/facebook.png"
   },
   {
-    id: "2",
+    id: "2", 
     userId: "user1",
-    role: "Full Stack Developer",
-    type: "Mixed",
+    companyName: "StartupXYZ",
+    position: "Full Stack Developer",
+    description: "Begin with reviewing overnight system alerts and database performance metrics. Morning is dedicated to backend API development and database optimization. Afternoon involves frontend feature implementation and cross-browser testing. Participate in architecture discussions and mentor junior developers. Wrap up with deployment planning and security reviews.",
+    challenges: [
+      "Challenge 1: Scale database queries for growing user base",
+      "Challenge 2: Integrate third-party APIs with error handling",
+      "Challenge 3: Maintain code quality while meeting tight deadlines"
+    ],
+    requirements: ["Node.js", "React", "MongoDB", "AWS"],
     techstack: ["Node.js", "Express", "MongoDB", "React"],
-    level: "Senior",
-    questions: ["What is Node.js?"],
-    finalized: false,
     createdAt: "2024-03-14T15:30:00Z",
-  },
+    coverImage: "/covers/amazon.png"
+  }
 ];
