@@ -148,77 +148,62 @@ const DayInRoleDetailPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Image src="/briefcase.svg" alt="challenges" width={24} height={24} />
-                Key Challenges & Tasks
+                Example Tasks & Common Challenges
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {dayInRole.challenges.map((challenge, index) => {
                   // Handle both new structure (object) and legacy structure (string)
                   const isNewStructure = typeof challenge === 'object' && challenge.challenge;
-                  const challengeText = isNewStructure ? challenge.challenge : challenge;
+                  const challengeText = isNewStructure ? challenge.challenge : String(challenge);
                   const advice = isNewStructure ? challenge.advice : null;
-                  const tips = isNewStructure ? challenge.tips : [];
-                  const resources = isNewStructure ? challenge.resources : [];
+                  
+                  // Extract task and challenge from the challenge text
+                  // For legacy format, we'll create a generic structure
+                  let taskTitle = `Task ${index + 1}`;
+                  const challengeDescription = challengeText;
+                  let knowledgeNeeded = advice || "Professional experience and problem-solving skills required.";
+                  
+                  // If it's new structure, try to parse more meaningful content
+                  if (isNewStructure && advice) {
+                    // Try to extract a more meaningful task title from the challenge text
+                    const challengeWords = challengeText.split(' ').slice(0, 8).join(' ');
+                    taskTitle = challengeWords.length > 50 ? challengeWords.substring(0, 50) + '...' : challengeWords;
+                    knowledgeNeeded = advice;
+                  }
 
                   return (
                     <div key={index} className="border border-border/20 rounded-lg p-6 bg-card/50">
-                      {/* Challenge */}
-                      <div className="flex gap-3 mb-4">
-                        <div className="flex-shrink-0 w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center text-sm font-semibold text-primary">
-                          {index + 1}
-                        </div>
-                        <p className="text-foreground font-medium">{challengeText}</p>
+                      {/* Task */}
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                          <div className="flex-shrink-0 w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center text-sm font-semibold text-primary">
+                            {index + 1}
+                          </div>
+                          Task: {taskTitle}
+                        </h3>
                       </div>
 
-                      {/* Advice */}
-                      {advice && (
-                        <div className="ml-9 mb-4">
-                          <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2">
-                            <Image src="/lightbulb.svg" alt="advice" width={16} height={16} />
-                            How to Handle This
-                          </h4>
-                          <p className="text-muted-foreground text-sm leading-relaxed">
-                            {advice}
-                          </p>
-                        </div>
-                      )}
+                      {/* Challenge */}
+                      <div className="mb-4">
+                        <h4 className="text-base font-semibold text-orange-600 dark:text-orange-400 mb-2">
+                          Challenge:
+                        </h4>
+                        <p className="text-foreground leading-relaxed">
+                          {challengeDescription}
+                        </p>
+                      </div>
 
-                      {/* Tips */}
-                      {tips.length > 0 && (
-                        <div className="ml-9 mb-4">
-                          <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2">
-                            <Image src="/target.svg" alt="tips" width={16} height={16} />
-                            Pro Tips
-                          </h4>
-                          <ul className="space-y-1">
-                            {tips.map((tip, tipIndex) => (
-                              <li key={tipIndex} className="text-muted-foreground text-sm flex items-start gap-2">
-                                <div className="w-1 h-1 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                                {tip}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Resources */}
-                      {resources.length > 0 && (
-                        <div className="ml-9">
-                          <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2">
-                            <Image src="/book.svg" alt="resources" width={16} height={16} />
-                            Helpful Resources
-                          </h4>
-                          <ul className="space-y-1">
-                            {resources.map((resource, resourceIndex) => (
-                              <li key={resourceIndex} className="text-muted-foreground text-sm flex items-start gap-2">
-                                <div className="w-1 h-1 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                                {resource}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      {/* Knowledge Needed */}
+                      <div>
+                        <h4 className="text-base font-semibold text-blue-600 dark:text-blue-400 mb-2">
+                          Knowledge Needed:
+                        </h4>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {knowledgeNeeded}
+                        </p>
+                      </div>
                     </div>
                   );
                 })}
