@@ -15,17 +15,18 @@ const CreateDayInRolePage = () => {
     enableRedirect: true
   });
 
-  const handleSubmit = async (jobOfferText: string, language: 'original' | 'english') => {
+  const handleSubmit = async (input: string, language: 'original' | 'english', inputType: 'text' | 'url') => {
     if (!user) return;
 
-    console.log('Form submitted with language:', language); // Debug log
+    console.log('Form submitted with language:', language, 'inputType:', inputType); // Debug log
 
     setIsLoading(true);
     try {
       const requestBody = {
-        jobOfferText,
+        jobOfferText: input,
         userId: user.uid,
         language,
+        inputType,
       };
       
       console.log('Request body:', requestBody); // Debug log
@@ -95,7 +96,7 @@ const CreateDayInRolePage = () => {
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Transform any job offer into an immersive preview of your potential workday. 
-              Discover the daily tasks, challenges, and culture before you apply.
+              Simply paste a job posting URL or text to discover the daily tasks, challenges, and culture before you apply.
             </p>
           </div>
           
@@ -103,7 +104,7 @@ const CreateDayInRolePage = () => {
           
           <div className="text-center mt-8">
             <p className="text-sm text-muted-foreground">
-              Need inspiration? Try pasting a job posting from LinkedIn, Indeed, or any job board.
+              💡 Try pasting a job posting URL from LinkedIn, Indeed, Glassdoor, or any job board for instant extraction!
             </p>
           </div>
         </div>

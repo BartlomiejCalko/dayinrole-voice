@@ -122,10 +122,10 @@ interface DayInRole {
   language?: 'original' | 'english';
 }
 
-// Future interface for when we add advice functionality
+// Updated interface with Tips & Resources structure
 interface DayInRoleChallenge {
+  title: string;
   challenge: string;
-  advice: string;
   tips: string[];
   resources: string[];
 }
@@ -174,9 +174,28 @@ interface CreateDayInRoleParams {
   jobOfferText: string;
   userId: string;
   language?: 'original' | 'english';
+  inputType?: 'text' | 'url';
 }
 
 interface DayInRoleFormProps {
-  onSubmit: (jobOfferText: string, language: 'original' | 'english') => void;
+  onSubmit: (input: string, language: 'original' | 'english', inputType: 'text' | 'url') => void;
   isLoading?: boolean;
+}
+
+interface InterviewQuestion {
+  id: string;
+  question: string;
+  sampleAnswer: string;
+  category: string;
+}
+
+interface InterviewQuestionSet {
+  id: string;
+  dayInRoleId: string;
+  userId: string;
+  questions: InterviewQuestion[];
+  numberOfQuestions: number;
+  language: string;
+  createdAt: string;
+  dayInRoleTitle: string;
 }

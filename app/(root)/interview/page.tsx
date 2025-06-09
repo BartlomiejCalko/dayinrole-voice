@@ -1,19 +1,48 @@
 "use client";
 
 import Agent from '@/components/Agent'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+
+interface InterviewQuestion {
+  id: string;
+  question: string;
+  sampleAnswer: string;
+  category: string;
+}
 
 const InterviewPage = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
+  const [dayInRoleTitle, setDayInRoleTitle] = useState<string>('');
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/sign-in');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    // Extract questions from URL parameters
+    const questionsParam = searchParams.get('questions');
+    const titleParam = searchParams.get('dayInRoleTitle');
+    
+    if (questionsParam) {
+      try {
+        const parsedQuestions = JSON.parse(questionsParam);
+        setQuestions(parsedQuestions);
+      } catch (error) {
+        console.error('Error parsing questions:', error);
+      }
+    }
+    
+    if (titleParam) {
+      setDayInRoleTitle(titleParam);
+    }
+  }, [searchParams]);
 
   // Show loading state while checking authentication
   if (loading) {
@@ -49,17 +78,17 @@ const InterviewPage = () => {
         <section className="flex flex-col gap-6 pt-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
-              Interview <span className="text-gray-400">Generation</span>
+              Interview <span className="text-gray-400">Practice</span>
             </h1>
             <p className="max-w-[600px] mx-auto text-gray-500 md:text-xl dark:text-gray-400 mt-4">
-              Practice your interview skills with our AI-powered interviewer. Get personalized feedback and improve your performance.
+              Practice your interview skills with personalized questions and professional sample answers tailored to your role.
             </p>
           </div>
         </section>
 
         {/* Main Interview Section */}
         <section className="flex flex-col px-6 py-12">
-          <Agent userName={user?.displayName || user?.email || 'You'} userId='user1' type='generate'/>
+          <Agent questions={questions} dayInRoleTitle={dayInRoleTitle} />
         </section>
 
         {/* Instructions Section */}
@@ -70,22 +99,22 @@ const InterviewPage = () => {
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-xl font-bold text-primary">1</span>
               </div>
-              <h4 className="font-semibold text-foreground">Start the Call</h4>
-              <p className="text-sm text-muted-foreground">Click the &ldquo;Call&rdquo; button to begin your AI-powered interview session.</p>
+              <h4 className="font-semibold text-foreground">Review Questions</h4>
+              <p className="text-sm text-muted-foreground">Browse through personalized interview questions generated specifically for your role.</p>
             </div>
             <div className="flex flex-col items-center text-center gap-3">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-xl font-bold text-primary">2</span>
               </div>
-              <h4 className="font-semibold text-foreground">Answer Questions</h4>
-              <p className="text-sm text-muted-foreground">Respond naturally to the AI interviewer&rsquo;s questions as you would in a real interview.</p>
+              <h4 className="font-semibold text-foreground">Practice Answers</h4>
+              <p className="text-sm text-muted-foreground">Think through your responses and reveal sample answers to learn best practices.</p>
             </div>
             <div className="flex flex-col items-center text-center gap-3">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-xl font-bold text-primary">3</span>
               </div>
-              <h4 className="font-semibold text-foreground">Get Feedback</h4>
-              <p className="text-sm text-muted-foreground">Receive detailed feedback on your performance and areas for improvement.</p>
+              <h4 className="font-semibold text-foreground">Improve Skills</h4>
+              <p className="text-sm text-muted-foreground">Learn from professional examples and boost your confidence for real interviews.</p>
             </div>
           </div>
         </section>

@@ -41,7 +41,7 @@ export function Hero(){
                 Know &lsquo;Day in role&rsquo;<br />In Your <span className="text-gray-400">new</span> Job
               </h1>
               <p className="max-w-[500px] text-gray-500 md:text-xl dark:text-gray-400 mt-6">
-                Paste any job offer &ndash; get a realistic &lsquo;day in the life&rsquo; summary instantly. Typical challenges and daily tasks.
+                Paste any job posting URL or text &ndash; get a realistic &lsquo;day in the life&rsquo; summary instantly. Typical challenges and daily tasks.
               </p>
             </motion.div>
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 mt-4">

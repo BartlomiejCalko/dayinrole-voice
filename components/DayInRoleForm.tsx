@@ -1,18 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { isJobUrl } from "@/lib/scrapeJobOffer";
+import { Link2, FileText } from "lucide-react";
 
 const DayInRoleForm = ({ onSubmit, isLoading = false }: DayInRoleFormProps) => {
-  const [jobOfferText, setJobOfferText] = useState("");
+  const [input, setInput] = useState("");
   const [language, setLanguage] = useState<'original' | 'english'>('original');
+  const [inputType, setInputType] = useState<'text' | 'url'>('text');
+
+  // Auto-detect if input is a URL
+  useEffect(() => {
+    const type = isJobUrl(input.trim()) ? 'url' : 'text';
+    setInputType(type);
+  }, [input]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (jobOfferText.trim()) {
-      onSubmit(jobOfferText.trim(), language);
+    if (input.trim()) {
+      onSubmit(input.trim(), language, inputType);
     }
   };
 
@@ -27,21 +36,46 @@ const DayInRoleForm = ({ onSubmit, isLoading = false }: DayInRoleFormProps) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="jobOffer" className="text-sm font-medium text-foreground">
-              
+            <label htmlFor="jobOffer" className="text-sm font-medium text-foreground flex items-center gap-2">
+              {inputType === 'url' ? (
+                <>
+                  <Link2 className="w-4 h-4 text-blue-500" />
+                  Job Posting URL
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4 text-gray-500" />
+                  Job Offer Text
+                </>
+              )}
             </label>
             <Textarea
               id="jobOffer"
-              placeholder="Paste the job offer text here..."
-              value={jobOfferText}
-              onChange={(e) => setJobOfferText(e.target.value)}
+              placeholder={inputType === 'url' 
+                ? "Paste a job posting URL here (e.g., from LinkedIn, Indeed, Glassdoor)..." 
+                : "Paste the job offer text here..."
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
               className="min-h-[250px] resize-none"
               disabled={isLoading}
               required
             />
-            <p className="text-xs text-muted-foreground">
-              💡 Tip: Include company name, position title, requirements, responsibilities, and tech stack for the best results.
-            </p>
+            <div className="flex flex-col gap-2">
+              {inputType === 'url' ? (
+                <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                  <Link2 className="w-3 h-3" />
+                  URL detected! We'll extract the job posting content automatically.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  💡 Tip: You can paste either a job posting URL or the job offer text directly.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                🔍 For best results, include company name, position title, requirements, responsibilities, and tech stack.
+              </p>
+            </div>
           </div>
 
           {/* Language Selection */}
@@ -86,15 +120,15 @@ const DayInRoleForm = ({ onSubmit, isLoading = false }: DayInRoleFormProps) => {
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={!jobOfferText.trim() || isLoading}
+            disabled={!input.trim() || isLoading}
           >
             {isLoading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Generating Day in Role...
+                {inputType === 'url' ? 'Extracting & Generating...' : 'Generating Day in Role...'}
               </>
             ) : (
-              "Generate Day in Role"
+              inputType === 'url' ? 'Extract & Generate Day in Role' : 'Generate Day in Role'
             )}
           </Button>
         </form>

@@ -2,17 +2,36 @@ import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { getRandomInterviewCover } from '@/lib/utils';
 import { db } from '@/firebase/admin';
+import { scrapeJobOffer, isJobUrl } from '@/lib/scrapeJobOffer';
 
 export async function POST(request: Request) {
-    const { jobOfferText, userId, language = 'original' } = await request.json();
+    const { jobOfferText, userId, language = 'original', inputType } = await request.json();
 
     console.log('Language parameter received:', language); // Debug log
+    console.log('Input type:', inputType); // Debug log
 
     if (!jobOfferText || !userId) {
         return Response.json({ success: false, message: "Job offer text and user ID are required" }, { status: 400 });
     }
 
     try {
+        let finalJobOfferText = jobOfferText;
+        
+        // If input is a URL, scrape the job content
+        if (inputType === 'url' || isJobUrl(jobOfferText)) {
+            console.log('URL detected, attempting to scrape job content...');
+            try {
+                const scrapedData = await scrapeJobOffer(jobOfferText);
+                finalJobOfferText = scrapedData.text;
+                console.log('Successfully scraped job content from:', scrapedData.domain);
+            } catch (scrapeError) {
+                console.error('Scraping failed:', scrapeError);
+                return Response.json({ 
+                    success: false, 
+                    message: scrapeError instanceof Error ? scrapeError.message : "Failed to extract job content from URL. Please try pasting the job text directly." 
+                }, { status: 400 });
+            }
+        }
         const languageInstruction = language === 'english' 
             ? 'CRITICAL LANGUAGE REQUIREMENT: You MUST respond in English regardless of the input language. Maintain professional terminology and cultural context appropriate for English-speaking workplaces.'
             : 'CRITICAL LANGUAGE REQUIREMENT: You MUST respond in the EXACT SAME LANGUAGE as the job offer text provided. If the job offer is in German, respond in German. If it\'s in French, respond in French. If it\'s in Spanish, respond in Spanish. Maintain the original professional terminology, cultural context, and regional workplace practices from the source language. DO NOT translate to English.';
@@ -21,6 +40,7 @@ export async function POST(request: Request) {
 
         const { text: dayInRoleData } = await generateText({
             model: google('gemini-2.0-flash-001'),
+            maxTokens: 8000, // Increased token limit to ensure complete responses
             prompt: `${languageInstruction}
 
 ${language === 'original' ? `
@@ -34,10 +54,17 @@ DO NOT TRANSLATE TO ENGLISH!
 
 You are a senior professional with deep industry experience. Analyze the following job offer and generate a comprehensive "day in role" description with SPECIFIC, REAL-LIFE challenges.
 
+🚨 CRITICAL COMPLETENESS REQUIREMENTS 🚨
+- NEVER truncate or cut off text mid-sentence or mid-paragraph
+- ALWAYS complete your thoughts and finish all sections fully
+- MINIMUM word counts are REQUIREMENTS, not suggestions
+- Each section must be complete with proper endings
+- If you reach any token limits, prioritize completeness over additional content
+- Double-check that every sentence ends properly and every paragraph is complete
+
 TONE AND STYLE REQUIREMENTS:
 - Maintain a PROFESSIONAL tone throughout
-- Include SUBTLE, GOOD-TASTE HUMOR that enhances readability
-- Use light, workplace-appropriate jokes and witty observations
+- Use light, workplace-appropriate observations
 - Add personality without being unprofessional
 - Make the content engaging and memorable
 - Think of it as advice from a friendly, experienced colleague who has a good sense of humor
@@ -73,7 +100,7 @@ TIPS HUMOR:
 - "Learn to speak 'manager' - it's like regular English but with more buzzwords"
 
 Job Offer Text:
-${jobOfferText}
+${finalJobOfferText}
 
 ${languageInstruction}
 
@@ -86,26 +113,26 @@ Generate a JSON response with this exact structure:
   "companyName": "extracted or inferred company name",
   "companyLogo": "company logo URL if found in the job offer text, otherwise null",
   "position": "job title/position",
-  "description": "A detailed description (200-300 words) of what a typical day in this role would look like, including daily tasks, meetings, collaboration, and work environment",
+  "description": "A concise but engaging description (250-400 words) of what a typical day in this role would like, focusing on key daily activities, important meetings, and work environment. Keep it digestible and practical. ENSURE COMPLETE SENTENCES - DO NOT CUT OFF MID-SENTENCE",
   "challenges": [
-    {
-      "challenge": "Specific real-life challenge with concrete example",
-      "advice": "Practical, actionable advice on how to handle this challenge",
-      "tips": ["Tip 1", "Tip 2", "Tip 3"],
-      "resources": ["Resource 1", "Resource 2"]
-    },
-    {
-      "challenge": "Another specific challenge with concrete example",
-      "advice": "Practical, actionable advice on how to handle this challenge",
-      "tips": ["Tip 1", "Tip 2", "Tip 3"],
-      "resources": ["Resource 1", "Resource 2"]
-    },
-    {
-      "challenge": "Third specific challenge with concrete example",
-      "advice": "Practical, actionable advice on how to handle this challenge",
-      "tips": ["Tip 1", "Tip 2", "Tip 3"],
-      "resources": ["Resource 1", "Resource 2"]
-    }
+          {
+        "title": "Short, clear task title (maximum 5-8 words)",
+        "challenge": "Specific real-life challenge with concrete example (60-100 words, concise but complete)",
+        "tips": ["Actionable tip 1 for solving this challenge", "Practical tip 2 with specific approach", "Quick tip 3 for immediate help"],
+        "resources": ["Specific tool/platform (with URL if possible)", "Relevant book or course title", "Documentation or tutorial resource"]
+      },
+      {
+        "title": "Short, clear task title (maximum 5-8 words)",
+        "challenge": "Another specific challenge with concrete example (60-100 words, concise but complete)",
+        "tips": ["Actionable tip 1 for solving this challenge", "Practical tip 2 with specific approach", "Quick tip 3 for immediate help"],
+        "resources": ["Specific tool/platform (with URL if possible)", "Relevant book or course title", "Documentation or tutorial resource"]
+      },
+      {
+        "title": "Short, clear task title (maximum 5-8 words)",
+        "challenge": "Third specific challenge with concrete example (60-100 words, concise but complete)",
+        "tips": ["Actionable tip 1 for solving this challenge", "Practical tip 2 with specific approach", "Quick tip 3 for immediate help"],
+        "resources": ["Specific tool/platform (with URL if possible)", "Relevant book or course title", "Documentation or tutorial resource"]
+      }
   ],
   "requirements": ["requirement1", "requirement2", "requirement3"],
   "techstack": ["tech1", "tech2", "tech3"]
@@ -116,10 +143,18 @@ CRITICAL GUIDELINES FOR CHALLENGES:
 - Include concrete examples, numbers, tools, or situations
 - Avoid generic phrases like "meeting deadlines" or "working with teams"
 - Make challenges actionable and specific to the industry/role
-- Examples of GOOD challenges:
-  * "Debugging a memory leak in a React application that's causing 30% slower page load times during peak traffic hours"
-  * "Convincing a skeptical client to increase their budget by $50K when they're seeing 20% lower conversion rates than expected"
-  * "Redesigning the user onboarding flow when 40% of new users drop off at the payment step"
+
+TITLE EXAMPLES (5-8 words max):
+- "Debug Memory Leak Issue"
+- "Handle Client Budget Concerns"
+- "Fix User Onboarding Flow"
+- "Resolve Server Performance Problem"
+- "Manage Urgent Bug Fix"
+
+CHALLENGE EXAMPLES:
+  * Title: "Debug Memory Leak Issue", Challenge: "Debugging a memory leak in a React application that's causing 30% slower page load times during peak traffic hours"
+  * Title: "Handle Client Budget Concerns", Challenge: "Convincing a skeptical client to increase their budget by $50K when they're seeing 20% lower conversion rates than expected"
+  * Title: "Fix User Onboarding Flow", Challenge: "Redesigning the user onboarding flow when 40% of new users drop off at the payment step"
 
 CRITICAL GUIDELINES FOR ADVICE:
 - Provide SPECIFIC, ACTIONABLE advice that someone could immediately implement
@@ -160,7 +195,7 @@ Guidelines:
 - Extract company name from the job offer (if not found, infer from context or use "Unknown Company")
 - Extract company logo URL if present in the job offer text (look for image URLs, logo links, or company branding assets)
 - Extract exact position title from the job offer
-- Create an engaging 200-300 word description of a typical workday
+- Create an engaging 300-500 word description of a typical workday
 - Generate 3 SPECIFIC, REAL-LIFE challenges with concrete details
 - List 3-5 key requirements from the job offer
 - Extract all technologies, frameworks, and tools mentioned
@@ -179,7 +214,16 @@ Make the description realistic and engaging, covering:
 - Work environment and culture
 - Growth and learning opportunities
 
-REMEMBER: Return ONLY the JSON object, no other text.`,
+🚨 FINAL QUALITY CHECK 🚨
+Before you finish:
+1. Verify that your description is 250-400 words, concise but complete, ending with a complete sentence
+2. Verify that each task TITLE is 5-8 words maximum (short and clear)
+3. Verify that each challenge description is 60-100 words, focused and complete
+4. Verify that tips are actionable and practical (not generic advice)
+5. Verify that resources include specific tools, books, or links (not vague references)
+6. Ensure NO text is cut off mid-sentence anywhere
+
+REMEMBER: Return ONLY the JSON object, no other text. PRIORITIZE CONCISENESS AND ACTIONABILITY.`,
         });
 
         // Clean and parse the AI response
@@ -236,28 +280,28 @@ REMEMBER: Return ONLY the JSON object, no other text.`,
             };
         }
 
-        // Validate and sanitize the parsed data
+        // Validate and sanitize the parsed data (NO CHARACTER LIMITS - preserve full content)
         const dayInRole = {
-            companyName: (parsedData.companyName || 'Unknown Company').toString().slice(0, 100),
+            companyName: (parsedData.companyName || 'Unknown Company').toString(),
             companyLogo: parsedData.companyLogo && typeof parsedData.companyLogo === 'string' && parsedData.companyLogo.startsWith('http') 
-                ? parsedData.companyLogo.slice(0, 500) 
+                ? parsedData.companyLogo 
                 : null,
-            position: (parsedData.position || 'Unknown Position').toString().slice(0, 100),
-            description: (parsedData.description || 'No description available').toString().slice(0, 1000),
-            challenges: Array.isArray(parsedData.challenges) 
-                ? parsedData.challenges.slice(0, 3).map(c => {
+            position: (parsedData.position || 'Unknown Position').toString(),
+            description: (parsedData.description || 'No description available').toString(),
+                            challenges: Array.isArray(parsedData.challenges) 
+                ? parsedData.challenges.slice(0, 3).map((c: any) => {
                     if (typeof c === 'object' && c.challenge) {
                         return {
-                            challenge: c.challenge.toString().slice(0, 300),
-                            advice: (c.advice || '').toString().slice(0, 500),
-                            tips: Array.isArray(c.tips) ? c.tips.slice(0, 3).map(t => t.toString().slice(0, 100)) : [],
-                            resources: Array.isArray(c.resources) ? c.resources.slice(0, 3).map(r => r.toString().slice(0, 100)) : []
+                            title: c.title ? c.title.toString() : "Task",
+                            challenge: c.challenge.toString(),
+                            tips: Array.isArray(c.tips) ? c.tips.slice(0, 3).map((t: any) => t.toString()) : [],
+                            resources: Array.isArray(c.resources) ? c.resources.slice(0, 3).map((r: any) => r.toString()) : []
                         };
                     } else {
                         // Handle legacy string format
                         return {
-                            challenge: c.toString().slice(0, 300),
-                            advice: '',
+                            title: "Task",
+                            challenge: c.toString(),
                             tips: [],
                             resources: []
                         };
@@ -284,10 +328,10 @@ REMEMBER: Return ONLY the JSON object, no other text.`,
                     }
                 ],
             requirements: Array.isArray(parsedData.requirements) 
-                ? parsedData.requirements.slice(0, 10).map(r => r.toString().slice(0, 50))
+                ? parsedData.requirements.slice(0, 10).map((r: any) => r.toString())
                 : ["Professional experience"],
             techstack: Array.isArray(parsedData.techstack) 
-                ? parsedData.techstack.slice(0, 10).map(t => t.toString().slice(0, 30))
+                ? parsedData.techstack.slice(0, 10).map((t: any) => t.toString())
                 : [],
             userId: userId,
             coverImage: getRandomInterviewCover(),
