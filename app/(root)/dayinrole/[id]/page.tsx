@@ -163,7 +163,7 @@ const DayInRoleDetailPage = () => {
         <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-blue-500/20 to-green-500/20 blur-3xl" />
       </div>
 
-      <div className="relative z-10 py-12">
+      <div className="relative z-10 py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Header */}
           <div className="text-center mb-8">
@@ -339,7 +339,7 @@ const DayInRoleDetailPage = () => {
           
 
           {/* Day Description */}
-          <Card className="mb-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-lg">
+          <Card className="mb-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-2xl">
                 <div className="p-2 rounded-full bg-primary/20">
@@ -360,7 +360,7 @@ const DayInRoleDetailPage = () => {
           </Card>
 
           {/* Challenges */}
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 rounded-full bg-white">
                 <Image src="/briefcase.svg" alt="challenges" width={28} height={28} />
@@ -458,7 +458,7 @@ const DayInRoleDetailPage = () => {
 
           {/* Requirements */}
           {dayInRole.requirements.length > 0 && (
-            <Card className="mb-8 border-border/30 shadow-md bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20">
+            <Card className="mb-6 border-border/30 shadow-md bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <div className="p-2 rounded-full bg-green-500/20">
@@ -481,7 +481,7 @@ const DayInRoleDetailPage = () => {
           )}
 
           {/* Actions */}
-          <div className="flex justify-center gap-4 flex-wrap">
+          <div className="flex justify-center gap-4 flex-wrap mb-4">
             <Button asChild variant="outline">
               <Link href="/dashboard">
                 Back to Dashboard

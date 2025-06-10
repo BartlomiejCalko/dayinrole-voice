@@ -1,7 +1,7 @@
 "use client";
 
 import Agent from '@/components/Agent'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,7 @@ interface InterviewQuestion {
   category: string;
 }
 
-const InterviewPage = () => {
+const InterviewContent = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -125,6 +125,24 @@ const InterviewPage = () => {
         
       </div>
     </div>
+  )
+}
+
+const InterviewPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="relative min-h-screen bg-background dark:bg-neutral-950">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[40%] -right-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 blur-3xl" />
+          <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-blue-500/20 to-green-500/20 blur-3xl" />
+        </div>
+        <div className="relative z-10 flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    }>
+      <InterviewContent />
+    </Suspense>
   )
 }
 
