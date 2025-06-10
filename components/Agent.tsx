@@ -52,21 +52,19 @@ const Agent = ({ questions, dayInRoleTitle }: AgentProps) => {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8">
-      {/* Header Section */}
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-foreground mb-2">
-          Interview Practice Session
-        </h2>
+      {/* Session Info */}
+      <div className="text-center space-y-4">
         {dayInRoleTitle && (
-          <p className="text-lg text-muted-foreground mb-4">
-            Preparing for: <span className="font-semibold">{dayInRoleTitle}</span>
-          </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm border border-primary/20 rounded-full">
+            <span className="text-sm text-primary font-medium">Preparing for:</span>
+            <span className="text-sm font-semibold">{dayInRoleTitle}</span>
+          </div>
         )}
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-          <div className="w-32 bg-muted rounded-full h-2">
+        <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+          <span className="font-medium">Question {currentQuestionIndex + 1} of {questions.length}</span>
+          <div className="w-40 bg-muted/60 rounded-full h-2 overflow-hidden">
             <div 
-              className="bg-primary h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
             />
           </div>

@@ -12,17 +12,21 @@ function detectLanguageFromJobContent(content: string): string {
     polish: [
       'i ', 'w ', 'na ', 'z ', 'do ', 'o ', 'że ', 'się ', 'oraz', 'będzie', 'można', 'powinien', 'zespół', 'projekt',
       'doświadczenie', 'firma', 'praca', 'stanowisko', 'technologie', 'rozwój', 'umiejętności', 'kandydat',
-      'anie', 'acja', 'ość', 'enie'
+      'oferujemy', 'wymagania', 'wymagany', 'wykształcenie', 'znajomość', 'preferowane', 'mile widziane',
+      'współpracy', 'realizacji', 'oprogramowania', 'aplikacji', 'systemów', 'bazy danych',
+      'anie', 'acja', 'ość', 'enie', 'ować', 'nych', 'owy', 'owe'
     ],
     french: [
       'et ', 'de ', 'le ', 'la ', 'les ', 'du ', 'des ', 'dans', 'avec', 'pour', 'sur', 'vous', 'nous', 'être', 'avoir',
       'expérience', 'entreprise', 'travail', 'poste', 'technologies', 'développement', 'compétences', 'candidat',
-      'tion', 'ment', 'eur', 'euse'
+      'recherche', 'offrons', 'exigences', 'formation', 'connaissance', 'maîtrise', 'collaboration',
+      'tion', 'ment', 'eur', 'euse', 'ique', 'aire'
     ],
     german: [
       'und ', 'der ', 'die ', 'das ', 'den ', 'dem ', 'ein ', 'eine', 'mit', 'für', 'auf', 'sie', 'wir', 'sind', 'haben',
       'erfahrung', 'unternehmen', 'arbeit', 'position', 'technologien', 'entwicklung', 'fähigkeiten', 'bewerber',
-      'ung', 'keit', 'lich', 'isch'
+      'suchen', 'bieten', 'anforderungen', 'ausbildung', 'kenntnisse', 'zusammenarbeit', 'software',
+      'ung', 'keit', 'lich', 'isch', 'ität', 'ieren'
     ],
     spanish: [
       'y ', 'de ', 'el ', 'la ', 'los ', 'las ', 'en ', 'con', 'para', 'por', 'que', 'del', 'ser', 'estar',
@@ -48,12 +52,28 @@ function detectLanguageFromJobContent(content: string): string {
     ukrainian: [
       'і ', 'в ', 'на ', 'з ', 'для ', 'як ', 'що', 'бути', 'мати', 'ми', 'ви', 'вони',
       'досвід', 'компанія', 'робота', 'позиція', 'технології', 'розробка', 'навички', 'кандидат'
+    ],
+    norwegian: [
+      'og ', 'av ', 'i ', 'til ', 'for ', 'med', 'på', 'er', 'å', 'det', 'vi', 'du', 'deg', 'være', 'har', 'kan',
+      'erfaring', 'selskap', 'arbeid', 'stilling', 'teknologi', 'utvikling', 'ferdigheter', 'kandidat',
+      'søker', 'tilbyr', 'krav', 'utdanning', 'kunnskap', 'samarbeid', 'ansvar', 'muligheter'
+    ],
+    danish: [
+      'og ', 'af ', 'i ', 'til ', 'for ', 'med', 'på', 'er', 'at', 'det', 'vi', 'du', 'dig', 'være', 'har', 'kan',
+      'erfaring', 'virksomhed', 'arbejde', 'stilling', 'teknologi', 'udvikling', 'færdigheder', 'kandidat',
+      'søger', 'tilbyder', 'krav', 'uddannelse', 'viden', 'samarbejde', 'ansvar', 'muligheder'
+    ],
+    swedish: [
+      'och ', 'av ', 'i ', 'till ', 'för ', 'med', 'på', 'är', 'att', 'det', 'vi', 'du', 'dig', 'vara', 'har', 'kan',
+      'erfarenhet', 'företag', 'arbete', 'tjänst', 'teknik', 'utveckling', 'färdigheter', 'kandidat',
+      'söker', 'erbjuder', 'krav', 'utbildning', 'kunskap', 'samarbete', 'ansvar', 'möjligheter'
     ]
   };
 
   let maxScore = 0;
   let detectedLang = 'english';
   let totalMatches = 0;
+  const scores: Record<string, number> = {};
 
   // Calculate scores for each language based on indicator frequency
   for (const [lang, indicators] of Object.entries(languageIndicators)) {
@@ -65,14 +85,22 @@ function detectLanguageFromJobContent(content: string): string {
       totalMatches += matches;
     }
     
+    scores[lang] = score;
+    
     if (score > maxScore) {
       maxScore = score;
       detectedLang = lang;
     }
   }
 
+  // Log detection results for debugging
+  console.log('Language detection scores:', scores);
+  console.log('Total matches found:', totalMatches);
+  console.log('Detected language:', detectedLang, 'with score:', maxScore);
+
   // If no significant indicators found, default to English
   if (totalMatches < 3) {
+    console.log('Not enough language indicators found, defaulting to English');
     detectedLang = 'english';
   }
 
@@ -82,16 +110,19 @@ function detectLanguageFromJobContent(content: string): string {
 // Get language-specific interview instructions for Gemini
 function getLanguageInstructions(language: string): string {
   const instructions = {
-    english: "Generate professional interview questions in English.",
-    polish: "Generuj profesjonalne pytania rekrutacyjne w języku polskim. Używaj formalnego zwrotu Pan/Pani. Pytania powinny brzmieć naturalnie i profesjonalnie dla native speakerów polskiego.",
-    french: "Générez des questions d'entretien professionnelles en français. Utilisez un ton formel et professionnel approprié au contexte d'entreprise français.",
-    german: "Generieren Sie professionelle Vorstellungsgesprächsfragen auf Deutsch. Verwenden Sie einen formellen und professionellen Ton, der für deutsche Geschäftsumgebungen angemessen ist.",
-    spanish: "Genera preguntas de entrevista profesionales en español. Usa un tono formal y profesional apropiado para el contexto empresarial en español.",
-    italian: "Genera domande di colloquio professionali in italiano. Usa un tono formale e professionale appropriato per il contesto aziendale italiano.",
-    portuguese: "Gere perguntas de entrevista profissionais em português. Use um tom formal e profissional apropriado para o contexto empresarial em português.",
-    dutch: "Genereer professionele sollicitatievragen in het Nederlands. Gebruik een formele en professionele toon die geschikt is voor Nederlandse bedrijfscontexten.",
-    russian: "Создайте профессиональные вопросы для собеседования на русском языке. Используйте формальный и профессиональный тон, подходящий для российского корпоративного контекста.",
-    ukrainian: "Створіть професійні питання для співбесіди українською мовою. Використовуйте формальний та професійний тон, відповідний для українського корпоративного контексту."
+    english: "You MUST generate ALL interview questions in ENGLISH only. Use professional business English appropriate for corporate interviews.",
+    polish: "Musisz wygenerować WSZYSTKIE pytania rekrutacyjne WYŁĄCZNIE w języku POLSKIM. Używaj formalnego zwrotu Pan/Pani. Pytania muszą brzmieć naturalnie i profesjonalnie dla native speakerów polskiego. Żadne słowo nie może być w języku angielskim.",
+    french: "Vous DEVEZ générer TOUTES les questions d'entretien EXCLUSIVEMENT en FRANÇAIS. Utilisez un ton formel et professionnel approprié au contexte d'entreprise français. Aucun mot ne doit être en anglais.",
+    german: "Sie MÜSSEN ALLE Vorstellungsgesprächsfragen AUSSCHLIESSLICH auf DEUTSCH generieren. Verwenden Sie einen formellen und professionellen Ton, der für deutsche Geschäftsumgebungen angemessen ist. Kein Wort darf auf Englisch sein.",
+    spanish: "Debes generar TODAS las preguntas de entrevista EXCLUSIVAMENTE en ESPAÑOL. Usa un tono formal y profesional apropiado para el contexto empresarial en español. Ninguna palabra debe estar en inglés.",
+    italian: "Devi generare TUTTE le domande di colloquio ESCLUSIVAMENTE in ITALIANO. Usa un tono formale e professionale appropriato per il contesto aziendale italiano. Nessuna parola deve essere in inglese.",
+    portuguese: "Você DEVE gerar TODAS as perguntas de entrevista EXCLUSIVAMENTE em PORTUGUÊS. Use um tom formal e profissional apropriado para o contexto empresarial em português. Nenhuma palavra deve estar em inglês.",
+    dutch: "Je MOET ALLE sollicitatievragen UITSLUITEND in het NEDERLANDS genereren. Gebruik een formele en professionele toon die geschikt is voor Nederlandse bedrijfscontexten. Geen enkel woord mag in het Engels zijn.",
+    russian: "Вы ДОЛЖНЫ создать ВСЕ вопросы для собеседования ИСКЛЮЧИТЕЛЬНО на РУССКОМ языке. Используйте формальный и профессиональный тон, подходящий для российского корпоративного контекста. Ни одного слова не должно быть на английском языке.",
+    ukrainian: "Ви ПОВИННІ створити ВСІ питання для співбесіди ВИКЛЮЧНО українською мовою. Використовуйте формальний та професійний тон, відповідний для українського корпоративного контексту. Жодного слова не повинно бути англійською мовою.",
+    norwegian: "Du MÅ generere ALLE intervjuspørsmål UTELUKKENDE på NORSK. Bruk en formell og profesjonell tone som passer for norske bedriftskontekster. Ikke et eneste ord skal være på engelsk.",
+    danish: "Du SKAL generere ALLE interviewspørgsmål UDELUKKENDE på DANSK. Brug en formel og professionel tone, der passer til danske virksomhedskontekster. Ikke et eneste ord må være på engelsk.",
+    swedish: "Du MÅSTE generera ALLA intervjufrågor UTESLUTANDE på SVENSKA. Använd en formell och professionell ton som passar svenska företagskontexter. Inte ett enda ord får vara på engelska."
   };
 
   return instructions[language as keyof typeof instructions] || instructions.english;
@@ -125,11 +156,33 @@ export async function POST(request: Request) {
 
         const dayInRoleData = dayInRoleDoc.data();
 
-        // Detect the language of the job offer content
-        const jobContent = `${dayInRoleData?.description || ''} ${dayInRoleData?.challenges?.map((c: unknown) => typeof c === 'string' ? c : (c as { challenge: string })?.challenge).join(' ') || ''} ${dayInRoleData?.requirements?.join(' ') || ''}`;
-        const detectedLanguage = detectLanguageFromJobContent(jobContent);
+        // Get the language from dayinrole if explicitly set, otherwise detect from content
+        let detectedLanguage = dayInRoleData?.language || 'english';
+        console.log('Initial language from dayinrole:', dayInRoleData?.language);
         
+        // Prepare job content for language detection
+        const jobContent = `
+            ${dayInRoleData?.title || ''} 
+            ${dayInRoleData?.description || ''} 
+            ${dayInRoleData?.requirements?.join(' ') || ''} 
+            ${dayInRoleData?.responsibilities?.join(' ') || ''} 
+            ${dayInRoleData?.challenges?.map((c: unknown) => typeof c === 'string' ? c : (c as { challenge: string })?.challenge).join(' ') || ''} 
+            ${dayInRoleData?.benefits?.join(' ') || ''} 
+            ${dayInRoleData?.companyDescription || ''}
+        `.trim();
+        
+        // If language is not explicitly set, try to detect from all content
+        if (!dayInRoleData?.language || dayInRoleData.language === 'auto') {
+            detectedLanguage = detectLanguageFromJobContent(jobContent);
+        }
+        
+        console.log('=== LANGUAGE DETECTION DEBUG ===');
+        console.log('DayInRole language field:', dayInRoleData?.language);
         console.log('Detected job offer language:', detectedLanguage);
+        console.log('Job content sample for language detection:', jobContent.substring(0, 300) + '...');
+        console.log('Job title:', dayInRoleData?.title);
+        console.log('Company name:', companyName);
+        console.log('=== END LANGUAGE DETECTION DEBUG ===');
 
         // Automatically determine interview level and type from job data
         const analysisPrompt = `
@@ -204,14 +257,56 @@ Return ONLY a JSON object with this exact format:
         
         console.log('Determined interview parameters:', { level, interviewType });
 
+        // Check for existing interviews to ensure uniqueness
+        console.log('Checking for existing interviews to ensure question uniqueness...');
+        const existingInterviewsSnapshot = await db.collection("interviews")
+            .where("dayInRoleId", "==", dayInRoleId)
+            .where("userId", "==", userId)
+            .get();
+
+        const existingQuestions: string[] = [];
+        existingInterviewsSnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.questions && Array.isArray(data.questions)) {
+                existingQuestions.push(...data.questions);
+            }
+        });
+
+        console.log(`Found ${existingQuestions.length} existing questions to avoid`);
+
         // Create a focused prompt based on the day-in-role context with language awareness
         const languageInstructions = getLanguageInstructions(detectedLanguage);
         
         const contextPrompt = `
 You are an expert interview coach creating professional interview questions for a ${role} position at ${companyName}.
 
-CRITICAL LANGUAGE REQUIREMENT: ${languageInstructions}
-The original job offer was written in ${detectedLanguage}. You MUST generate ALL questions in the same language (${detectedLanguage}) to match the job offer's language.
+🚨 ABSOLUTELY CRITICAL LANGUAGE REQUIREMENT 🚨
+${languageInstructions}
+
+MANDATORY LANGUAGE RULES:
+- The job offer is in ${detectedLanguage.toUpperCase()}
+- You MUST write ALL questions EXCLUSIVELY in ${detectedLanguage.toUpperCase()} 
+- Every single word, phrase, and sentence MUST be in ${detectedLanguage.toUpperCase()}
+- Do NOT mix languages or use English if the target language is different
+- The questions must sound natural and professional to native ${detectedLanguage} speakers
+- Use proper ${detectedLanguage} grammar, syntax, and professional terminology
+
+❌ WRONG: Mixing English with other languages
+✅ CORRECT: Pure ${detectedLanguage.toUpperCase()} throughout
+
+${existingQuestions.length > 0 ? `
+🔄 QUESTION UNIQUENESS REQUIREMENT:
+You MUST create completely NEW and UNIQUE questions. The user has already generated ${existingQuestions.length} questions for this position.
+
+QUESTIONS TO AVOID (do NOT create similar or duplicate questions):
+${existingQuestions.slice(0, 20).map((q, i) => `${i + 1}. ${q}`).join('\n')}
+
+Create questions that are:
+- Completely different in wording and focus
+- Cover different aspects of the role
+- Ask about different skills, experiences, or scenarios
+- Have unique angles and perspectives
+` : ''}
 
 INTERVIEW CONTEXT:
 - Position: ${role}
@@ -279,9 +374,27 @@ EXAMPLES TO AVOID:
 
 Generate exactly ${questionCount} professional interview questions in ${detectedLanguage}.
 
+🎯 FINAL VERIFICATION CHECKLIST:
+✅ All questions are in ${detectedLanguage.toUpperCase()} ONLY
+✅ No English words if target language is not English  
+✅ Questions are unique and different from existing ones
+✅ Professional tone appropriate for ${detectedLanguage} business context
+✅ Questions test relevant skills for ${level} ${role} position
+✅ Proper ${detectedLanguage} grammar and terminology
+
 RESPONSE FORMAT:
-Return ONLY a valid JSON array of strings. No explanations, no markdown, no additional text.
-Example: ["Question 1", "Question 2", "Question 3"]
+Return ONLY a valid JSON array of strings in ${detectedLanguage.toUpperCase()}. No explanations, no markdown, no additional text.
+
+EXAMPLE FOR ${detectedLanguage.toUpperCase()}:
+${detectedLanguage === 'norwegian' ? '["Kan du fortelle meg om din yrkeserfaring?", "Hvordan vil du håndtere en misfornøyd kunde?", "Hva er dine karrieremål?"]' :
+  detectedLanguage === 'danish' ? '["Kan du fortælle om din erhvervserfaring?", "Hvordan vil du håndtere en utilfreds kunde?", "Hvad er dine karrieremål?"]' :
+  detectedLanguage === 'swedish' ? '["Kan du berätta om din yrkeslivserfarenhet?", "Hur skulle du hantera en missnöjd kund?", "Vilka är dina karriärmål?"]' :
+  detectedLanguage === 'portuguese' ? '["Pode falar-me sobre a sua experiência profissional?", "Como lidaria com um cliente insatisfeito?", "Quais são os seus objetivos profissionais?"]' :
+  detectedLanguage === 'polish' ? '["Może Pan/Pani opowiedzieć o swoim doświadczeniu zawodowym?", "Jak poradziłby Pan/Pani sobie z niezadowolonym klientem?", "Jakie są Pana/Pani cele zawodowe?"]' :
+  detectedLanguage === 'french' ? '["Pouvez-vous me parler de votre expérience professionnelle?", "Comment géreriez-vous un client mécontent?", "Quels sont vos objectifs professionnels?"]' :
+  detectedLanguage === 'german' ? '["Können Sie mir von Ihrer beruflichen Erfahrung erzählen?", "Wie würden Sie mit einem unzufriedenen Kunden umgehen?", "Was sind Ihre beruflichen Ziele?"]' :
+  detectedLanguage === 'spanish' ? '["¿Puede hablarme de su experiencia profesional?", "¿Cómo manejaría a un cliente insatisfecho?", "¿Cuáles son sus objetivos profesionales?"]' :
+  '["Can you tell me about your professional experience?", "How would you handle an unsatisfied client?", "What are your professional goals?"]'}
         `;
 
         console.log('Generating interview questions with AI...');
@@ -319,6 +432,45 @@ Example: ["Question 1", "Question 2", "Question 3"]
             // Validate question count
             if (questions.length === 0) {
                 throw new Error('No questions generated');
+            }
+
+            // Validate language consistency (improved check)
+            if (detectedLanguage !== 'english') {
+                const questionsText = questions.join(' ').toLowerCase();
+                console.log('Checking language consistency for:', detectedLanguage);
+                console.log('Questions text sample:', questionsText.substring(0, 200));
+                
+                // Check for obvious English patterns
+                const englishPatterns = [
+                    /\b(you|your|the|and|can|tell|about|what|how|why|when|where)\b/g,
+                    /\b(experience|work|position|company|interview|questions|generated|english|templates|available|note)\b/g,
+                    /\b(describe|explain|discuss|handle|manage|think|feel|would|could|should)\b/g
+                ];
+                
+                let englishMatches = 0;
+                englishPatterns.forEach(pattern => {
+                    const matches = questionsText.match(pattern);
+                    if (matches) {
+                        englishMatches += matches.length;
+                    }
+                });
+                
+                console.log('English words/patterns found:', englishMatches);
+                
+                if (englishMatches > 5) {
+                    console.error(`ERROR: Generated questions contain too many English words/patterns (${englishMatches}) for target language: ${detectedLanguage}`);
+                    console.error('Generated questions:', questions);
+                    
+                    return Response.json({ 
+                        success: false, 
+                        message: `Interview questions were generated in wrong language. Expected ${detectedLanguage} but detected English patterns. Please try again.`,
+                        details: {
+                            expectedLanguage: detectedLanguage,
+                            englishPatternsFound: englishMatches,
+                            generatedQuestions: questions
+                        }
+                    }, { status: 422 });
+                }
             }
             
         } catch (parseError) {

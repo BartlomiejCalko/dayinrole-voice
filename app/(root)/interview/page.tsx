@@ -4,6 +4,8 @@ import Agent from '@/components/Agent'
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
 
 interface InterviewQuestion {
   id: string;
@@ -18,6 +20,15 @@ const InterviewPage = () => {
   const searchParams = useSearchParams();
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
   const [dayInRoleTitle, setDayInRoleTitle] = useState<string>('');
+  const [dayInRoleId, setDayInRoleId] = useState<string>('');
+
+  const handleBackToDayInRole = () => {
+    if (dayInRoleId) {
+      router.push(`/dayinrole/${dayInRoleId}`);
+    } else {
+      router.push('/dashboard');
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -29,6 +40,7 @@ const InterviewPage = () => {
     // Extract questions from URL parameters
     const questionsParam = searchParams.get('questions');
     const titleParam = searchParams.get('dayInRoleTitle');
+    const idParam = searchParams.get('dayInRoleId');
     
     if (questionsParam) {
       try {
@@ -41,6 +53,10 @@ const InterviewPage = () => {
     
     if (titleParam) {
       setDayInRoleTitle(titleParam);
+    }
+
+    if (idParam) {
+      setDayInRoleId(idParam);
     }
   }, [searchParams]);
 
@@ -76,6 +92,20 @@ const InterviewPage = () => {
       <div className="relative z-10 space-y-8">
         {/* Header Section */}
         <section className="flex flex-col gap-6 pt-8">
+          <div className="container mx-auto px-4 max-w-6xl">
+            {/* Back Button */}
+            <div className="flex justify-start mb-4">
+              <Button
+                variant="outline"
+                onClick={handleBackToDayInRole}
+                className="flex items-center gap-2 bg-background/80 backdrop-blur-sm border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 rounded-full px-4 py-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Day in Role 
+              </Button>
+            </div>
+          </div>
+          
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
               Interview <span className="text-gray-400">Practice</span>
@@ -92,32 +122,7 @@ const InterviewPage = () => {
         </section>
 
         {/* Instructions Section */}
-        <section className="flex flex-col gap-6 px-8 py-8">
-          <h3 className="text-2xl font-semibold text-foreground text-center">How it Works</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex flex-col items-center text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-xl font-bold text-primary">1</span>
-              </div>
-              <h4 className="font-semibold text-foreground">Review Questions</h4>
-              <p className="text-sm text-muted-foreground">Browse through personalized interview questions generated specifically for your role.</p>
-            </div>
-            <div className="flex flex-col items-center text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-xl font-bold text-primary">2</span>
-              </div>
-              <h4 className="font-semibold text-foreground">Practice Answers</h4>
-              <p className="text-sm text-muted-foreground">Think through your responses and reveal sample answers to learn best practices.</p>
-            </div>
-            <div className="flex flex-col items-center text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-xl font-bold text-primary">3</span>
-              </div>
-              <h4 className="font-semibold text-foreground">Improve Skills</h4>
-              <p className="text-sm text-muted-foreground">Learn from professional examples and boost your confidence for real interviews.</p>
-            </div>
-          </div>
-        </section>
+        
       </div>
     </div>
   )

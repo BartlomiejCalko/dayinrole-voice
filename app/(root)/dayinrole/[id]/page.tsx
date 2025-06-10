@@ -94,6 +94,7 @@ const DayInRoleDetailPage = () => {
         const searchParams = new URLSearchParams({
           questions: JSON.stringify(result.questions),
           dayInRoleTitle: `${dayInRole.position} at ${dayInRole.companyName}`,
+          dayInRoleId: dayInRole.id,
         });
         
         router.push(`/interview?${searchParams.toString()}`);
@@ -112,6 +113,7 @@ const DayInRoleDetailPage = () => {
     const searchParams = new URLSearchParams({
       questions: JSON.stringify(questionSet.questions),
       dayInRoleTitle: questionSet.dayInRoleTitle,
+      dayInRoleId: questionSet.dayInRoleId,
     });
     
     router.push(`/interview?${searchParams.toString()}`);
