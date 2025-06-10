@@ -53,9 +53,9 @@ const Agent = ({ questions, dayInRoleTitle }: AgentProps) => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8">
       {/* Session Info */}
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-8">
         {dayInRoleTitle && (
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm border border-primary/20 rounded-full">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/0 backdrop-blur-sm border border-primary/20 rounded-full">
             <span className="text-sm text-primary font-medium">Preparing for:</span>
             <span className="text-sm font-semibold">{dayInRoleTitle}</span>
           </div>
@@ -107,7 +107,7 @@ const Agent = ({ questions, dayInRoleTitle }: AgentProps) => {
               <Button
                 onClick={toggleAnswer}
                 variant={showAnswer ? "secondary" : "default"}
-                className="px-6 py-3 text-lg font-semibold"
+                className="px-6 py-3 text-sm"
               >
                 {showAnswer ? "Hide Sample Answer" : "Show Sample Answer"}
               </Button>
@@ -149,12 +149,6 @@ const Agent = ({ questions, dayInRoleTitle }: AgentProps) => {
         >
           Previous Question
         </Button>
-        
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Practice at your own pace
-          </p>
-        </div>
 
         <Button
           onClick={handleNextQuestion}

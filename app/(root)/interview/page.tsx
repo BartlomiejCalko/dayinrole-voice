@@ -110,14 +110,14 @@ const InterviewContent = () => {
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
               Interview <span className="text-gray-400">Practice</span>
             </h1>
-            <p className="max-w-[600px] mx-auto text-gray-500 md:text-xl dark:text-gray-400 mt-4">
+            {/* <p className="max-w-[600px] mx-auto text-gray-500 md:text-xl dark:text-gray-400 mt-4">
               Practice your interview skills with personalized questions and professional sample answers tailored to your role.
-            </p>
+            </p> */}
           </div>
         </section>
 
         {/* Main Interview Section */}
-        <section className="flex flex-col px-6 py-12">
+        <section className="flex flex-col px-6 py-2">
           <Agent questions={questions} dayInRoleTitle={dayInRoleTitle} />
         </section>
 
