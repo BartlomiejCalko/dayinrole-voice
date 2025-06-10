@@ -156,9 +156,9 @@ const DayInRoleDetailPage = () => {
   const formattedDate = dayjs(dayInRole.createdAt).format('MMMM D, YYYY');
 
   return (
-    <div className="relative min-h-screen bg-background dark:bg-neutral-950">
+    <div className="relative">
       {/* Background gradient */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="fixed inset-0 pointer-events-none -z-10">
         <div className="absolute -top-[40%] -right-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 blur-3xl" />
         <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-blue-500/20 to-green-500/20 blur-3xl" />
       </div>
@@ -339,7 +339,7 @@ const DayInRoleDetailPage = () => {
           
 
           {/* Day Description */}
-          <Card className="mb-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-lg">
+          <Card className="mb-6 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-2xl">
                 <div className="p-2 rounded-full bg-primary/20">
@@ -481,7 +481,7 @@ const DayInRoleDetailPage = () => {
           )}
 
           {/* Actions */}
-          <div className="flex justify-center gap-4 flex-wrap mb-4">
+          <div className="flex justify-center gap-4 flex-wrap mb-8">
             <Button asChild variant="outline">
               <Link href="/dashboard">
                 Back to Dashboard
