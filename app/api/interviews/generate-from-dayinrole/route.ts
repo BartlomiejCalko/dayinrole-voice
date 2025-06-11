@@ -2,6 +2,8 @@ import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { getRandomInterviewCover } from '@/lib/utils';
 import { db } from '@/firebase/admin';
+import { requireInterviewLimit } from '@/lib/subscription/middleware';
+import { incrementInterviewUsage } from '@/lib/subscription/queries';
 
 // Enhanced language detection function that analyzes job content
 function detectLanguageFromJobContent(content: string): string {
@@ -130,6 +132,10 @@ function getLanguageInstructions(language: string): string {
 
 export async function POST(request: Request) {
     try {
+        // Check subscription limits first
+        const limitCheck = await requireInterviewLimit(request as any);
+        if (limitCheck) return limitCheck;
+
         const { 
             dayInRoleId, 
             userId, 
@@ -510,6 +516,14 @@ ${detectedLanguage === 'norwegian' ? '["Kan du fortelle meg om din yrkeserfaring
         console.log('Creating interview document in Firestore...');
         const docRef = await db.collection("interviews").add(interview);
         console.log('Interview created successfully with ID:', docRef.id);
+        
+        // Increment usage after successful generation
+        try {
+            await incrementInterviewUsage(userId);
+        } catch (usageError) {
+            console.error('Error incrementing interview usage:', usageError);
+            // Don't fail the request if usage tracking fails
+        }
         
         return Response.json({ 
             success: true, 

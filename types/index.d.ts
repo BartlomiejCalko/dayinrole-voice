@@ -199,3 +199,58 @@ interface InterviewQuestionSet {
   createdAt: string;
   dayInRoleTitle: string;
 }
+
+// Subscription System Types
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  dayInRoleLimit: number;
+  interviewLimit: number;
+  questionsPerInterview: number;
+  stripeProductId: string;
+  stripePriceId: string;
+}
+
+interface UserSubscription {
+  id: string;
+  userId: string;
+  planId: string;
+  stripeCustomerId: string;
+  stripeSubscriptionId: string;
+  status: 'active' | 'canceled' | 'past_due' | 'unpaid';
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface UsageTracking {
+  id: string;
+  userId: string;
+  subscriptionId: string;
+  periodStart: string;
+  periodEnd: string;
+  dayInRoleUsed: number;
+  interviewsUsed: number;
+  resetAt: string;
+}
+
+interface SubscriptionLimits {
+  dayInRoleLimit: number;
+  dayInRoleUsed: number;
+  interviewLimit: number;
+  interviewsUsed: number;
+  questionsPerInterview: number;
+  canGenerateDayInRole: boolean;
+  canGenerateInterview: boolean;
+}
+
+interface SubscriptionPlansProps {
+  currentPlanId?: string;
+}
+
+interface UsageTrackerProps {
+  userId: string;
+}

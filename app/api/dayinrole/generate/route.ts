@@ -3,8 +3,14 @@ import { google } from '@ai-sdk/google';
 import { getRandomInterviewCover } from '@/lib/utils';
 import { db } from '@/firebase/admin';
 import { scrapeJobOffer, isJobUrl } from '@/lib/scrapeJobOffer';
+import { requireDayInRoleLimit } from '@/lib/subscription/middleware';
+import { incrementDayInRoleUsage } from '@/lib/subscription/queries';
 
 export async function POST(request: Request) {
+    // Check subscription limits first
+    const limitCheck = await requireDayInRoleLimit(request as any);
+    if (limitCheck) return limitCheck;
+
     const { jobOfferText, userId, language = 'original', inputType } = await request.json();
 
     console.log('Language parameter received:', language); // Debug log
@@ -341,6 +347,14 @@ REMEMBER: Return ONLY the JSON object, no other text. PRIORITIZE CONCISENESS AND
 
         // Save to Firebase
         const docRef = await db.collection("dayinroles").add(dayInRole);
+        
+        // Increment usage after successful generation
+        try {
+            await incrementDayInRoleUsage(userId);
+        } catch (usageError) {
+            console.error('Error incrementing day in role usage:', usageError);
+            // Don't fail the request if usage tracking fails
+        }
         
         return Response.json({ 
             success: true, 
