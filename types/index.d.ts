@@ -32,17 +32,26 @@ interface CreateFeedbackParams {
   feedbackId?: string;
 }
 
+// Updated User interface for Clerk
 interface User {
-  name: string;
-  email: string;
-  id: string;
+  id: string; // Clerk uses 'id' instead of 'uid'
+  firstName?: string | null;
+  lastName?: string | null;
+  emailAddresses: Array<{
+    emailAddress: string;
+    id: string;
+  }>;
+  primaryEmailAddress?: {
+    emailAddress: string;
+    id: string;
+  } | null;
 }
 
-// Note: The auth context uses Firebase's User type which has 'uid' instead of 'id'
-// This interface is for our app's user data structure
+// App user interface that combines Clerk user with our app data
 interface AppUser {
-  uid: string;
-  name?: string | null;
+  id: string; // Clerk uses 'id' instead of 'uid'
+  firstName?: string | null;
+  lastName?: string | null;
   email: string | null;
   displayName?: string | null;
 }
@@ -80,18 +89,7 @@ interface GetLatestInterviewsParams {
   limit?: number;
 }
 
-interface SignInParams {
-  email: string;
-  idToken: string;
-}
-
-interface SignUpParams {
-  uid: string;
-  name: string;
-  email: string;
-  password: string;
-}
-
+// Updated interfaces for Clerk (no longer need Firebase-specific sign-in/up params)
 type FormType = "sign-in" | "sign-up";
 
 interface InterviewFormProps {

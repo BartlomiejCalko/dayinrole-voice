@@ -6,15 +6,13 @@ import { HowItWorks } from '@/components/sections/HowItWorks'
 import { Benefits } from '@/components/sections/Benefits'
 import { Footer } from '@/components/sections/Footer'
 import { Navbar } from '@/components/shared/navbar'
-import { useAuthGuard } from '@/lib/hooks/use-auth-guard'
+import { useUser } from '@clerk/nextjs'
 
 const HomePage = () => {
-  const { loading } = useAuthGuard({
-    enableRedirect: false // Don't redirect from homepage
-  });
+  const { isLoaded } = useUser();
 
   // Show loading state while checking authentication
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

@@ -3,6 +3,7 @@ import { Mona_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "@/lib/providers";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const monaSans = Mona_Sans({
   variable: "--font-mona-sans",
@@ -21,16 +22,18 @@ export default async function RootLayout({
 }>) {
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${monaSans.className} antialiased`}
-      >
-        <Providers>
-          {children}
-        </Providers>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={`${monaSans.className} antialiased`}
+        >
+          <Providers>
+            {children}
+          </Providers>
 
-        <Toaster />
-      </body>
-    </html>
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

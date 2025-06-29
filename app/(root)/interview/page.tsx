@@ -2,7 +2,7 @@
 
 import Agent from '@/components/Agent'
 import React, { useEffect, useState, Suspense } from 'react'
-import { useAuth } from '@/lib/auth-context'
+import { useUser } from '@clerk/nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
@@ -15,7 +15,7 @@ interface InterviewQuestion {
 }
 
 const InterviewContent = () => {
-  const { user, loading } = useAuth();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
@@ -31,10 +31,10 @@ const InterviewContent = () => {
   };
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (isLoaded && !user) {
       router.push('/sign-in');
     }
-  }, [user, loading, router]);
+  }, [user, isLoaded, router]);
 
   useEffect(() => {
     // Extract questions from URL parameters
@@ -61,7 +61,7 @@ const InterviewContent = () => {
   }, [searchParams]);
 
   // Show loading state while checking authentication
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="relative min-h-screen bg-background dark:bg-neutral-950">
         {/* Background gradient */}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { AnimatedTestimonials } from "@/components/ui/animated-testimonials";
 import { testimonials } from "@/lib/testimonials-data";
-import { useAuth } from "@/lib/auth-context";
+import { useUser } from "@clerk/nextjs";
 
 // interface HeroProps {
 //   isAuthenticated: boolean;
@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/auth-context";
 // ({ isAuthenticated }: HeroProps)
 
 export function Hero(){
-  const { user } = useAuth();
+  const { user } = useUser();
   const isAuthenticated = !!user;
 
   return (

@@ -1,17 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { usePathname } from "next/navigation";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Icons } from "@/components/shared/icons";
 import { ModeToggle } from "./mode-toggle";
 
@@ -38,50 +31,10 @@ const routes = [
   },
 ];
 
-export function Navbar() {
+export const Navbar = () => {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, loading, signOut } = useAuth();
-  const isAuthenticated = !!user;
-
-  const handleSignOut = async () => {
-    try {
-      // Import the server action
-      const { signOut: serverSignOut } = await import('@/lib/actions/auth.action');
-      
-      // Clear server-side session first
-      await serverSignOut();
-      
-      // Then clear client-side auth
-      await signOut();
-      
-      router.replace("/");
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
-
-  if (loading) {
-    return (
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur">
-        <div className="container flex h-14 max-w-screen-xl items-center justify-between mx-auto px-4">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center space-x-2">
-              <Icons.logo className="h-6 w-6" />
-              <span className="font-bold">dayinrole</span>
-            </Link>
-          </div>
-          <div className="flex items-center space-x-4">
-            <ModeToggle />
-            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
-          </div>
-        </div>
-      </header>
-    );
-  }
 
   return (
-    // bg-background/95    supports-[backdrop-filter]:bg-background/60
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur">
       <div className="container flex h-14 max-w-screen-xl items-center justify-between mx-auto px-4">
         <div className="flex items-center gap-6">
@@ -91,64 +44,67 @@ export function Navbar() {
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
             {routes.map((route) => {
-              if (!route.public && !isAuthenticated) return null;
+              // Show public routes to everyone
+              if (route.public) {
+                return (
+                  <Link
+                    key={route.path}
+                    href={route.path}
+                    className={cn(
+                      "transition-colors hover:text-foreground/80",
+                      pathname === route.path ? "text-foreground" : "text-foreground/60"
+                    )}
+                  >
+                    {route.name}
+                  </Link>
+                );
+              }
+              
+              // Show private routes only to authenticated users
               return (
-                <Link
-                  key={route.path}
-                  href={route.path}
-                  className={cn(
-                    "transition-colors hover:text-foreground/80",
-                    pathname === route.path ? "text-foreground" : "text-foreground/60"
-                  )}
-                >
-                  {route.name}
-                </Link>
+                <SignedIn key={route.path}>
+                  <Link
+                    href={route.path}
+                    className={cn(
+                      "transition-colors hover:text-foreground/80",
+                      pathname === route.path ? "text-foreground" : "text-foreground/60"
+                    )}
+                  >
+                    {route.name}
+                  </Link>
+                </SignedIn>
               );
             })}
           </nav>
         </div>
         <div className="flex items-center space-x-4">
           <ModeToggle />
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.photoURL || ""} alt={user?.displayName || "User"} />
-                    <AvatarFallback>
-                      {user?.displayName
-                        ? user.displayName.charAt(0).toUpperCase()
-                        : user?.email?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard">Dashboard</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/subscription">Subscription</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
+          <SignedOut>
             <div className="flex items-center space-x-3">
-              <Button asChild variant="outline" size="sm">
-                <Link href="/sign-in">Sign in</Link>
-              </Button>
-              <Button asChild size="sm" className="">
-                <Link href="/sign-in">
-                  Try Free
-                </Link>
-              </Button>
+              <SignInButton mode="modal">
+                <Button variant="outline" size="sm">
+                  Sign in
+                </Button>
+              </SignInButton>
+              <SignInButton mode="modal">
+                <Button size="sm">
+                  Sign up
+                </Button>
+              </SignInButton>
             </div>
-          )}
+          </SignedOut>
+          <SignedIn>
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "h-8 w-8",
+                }
+              }}
+            />
+          </SignedIn>
         </div>
       </div>
     </header>
   );
-} 
+}; 

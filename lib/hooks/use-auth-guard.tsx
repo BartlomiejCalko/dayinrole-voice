@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
+import { useUser } from '@clerk/nextjs';
 
 interface UseAuthGuardOptions {
   redirectTo?: string;
@@ -17,45 +17,26 @@ export const useAuthGuard = ({
   redirectIfAuthenticated = false,
   enableRedirect = true,
 }: UseAuthGuardOptions = {}) => {
-  const { user, loading } = useAuth();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
-  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Clear any existing timeout
-    if (redirectTimeoutRef.current) {
-      clearTimeout(redirectTimeoutRef.current);
+    if (!isLoaded || !enableRedirect) return;
+
+    if (requireAuth && !user) {
+      router.replace('/sign-in');
+      return;
     }
 
-    // Don't do anything while loading or if redirects are disabled
-    if (loading || !enableRedirect) return;
-
-    // Add a small delay to prevent rapid redirects
-    redirectTimeoutRef.current = setTimeout(() => {
-      // Only redirect if authentication is required and user is not authenticated
-      if (requireAuth && !user) {
-        router.replace('/sign-in');
-        return;
-      }
-
-      // Only redirect authenticated users if explicitly requested
-      if (redirectIfAuthenticated && user) {
-        router.replace(redirectTo);
-        return;
-      }
-    }, 100); // 100ms delay to allow auth state to stabilize
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
-      }
-    };
-  }, [user, loading, router, redirectTo, requireAuth, redirectIfAuthenticated, enableRedirect]);
+    if (redirectIfAuthenticated && user) {
+      router.replace(redirectTo);
+      return;
+    }
+  }, [user, isLoaded, router, redirectTo, requireAuth, redirectIfAuthenticated, enableRedirect]);
 
   return {
     user,
-    loading,
+    loading: !isLoaded,
     isAuthenticated: !!user,
   };
 }; 

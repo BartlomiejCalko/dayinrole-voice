@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useUser } from '@clerk/nextjs';
 import { SubscriptionPlans } from '@/components/subscription/SubscriptionPlans';
 import { UsageTracker } from '@/components/subscription/UsageTracker';
 import { SubscriptionManagement } from '@/components/subscription/SubscriptionManagement';
@@ -12,7 +12,7 @@ import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 const SubscriptionPageContent = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,12 +56,12 @@ const SubscriptionPageContent = () => {
   };
 
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && isLoaded) {
       fetchSubscription();
     }
-  }, [user, authLoading]);
+  }, [user, isLoaded]);
 
-  if (authLoading || loading) {
+  if (!isLoaded || loading) {
     return (
       <div className="container mx-auto py-8 space-y-8">
         <div className="text-center">
@@ -120,7 +120,7 @@ const SubscriptionPageContent = () => {
         {subscription && (
           <div>
             <h2 className="text-2xl font-bold mb-4">Your Usage</h2>
-            <UsageTracker userId={user.uid} />
+            <UsageTracker userId={user.id} />
           </div>
         )}
 

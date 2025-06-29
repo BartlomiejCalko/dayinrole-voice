@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
+import { useUser } from "@clerk/nextjs";
 import { 
   Brain, 
   DollarSign, 
@@ -44,7 +44,7 @@ const benefits = [
 ];
 
 export const Benefits = () => {
-  const { user } = useAuth();
+  const { user } = useUser();
   const isAuthenticated = !!user;
 
   return (
