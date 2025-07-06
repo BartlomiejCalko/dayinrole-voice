@@ -29,9 +29,9 @@ export async function POST(req: NextRequest) {
 
     // Update local database
     await updateSubscriptionStatus(
-      subscription.stripeSubscriptionId,
+      subscription.stripe_subscription_id,
       subscription.status, // Keep current status but mark for cancellation
-      { cancelAtPeriodEnd: true }
+      { cancel_at_period_end: true }
     );
 
     return Response.json({ 

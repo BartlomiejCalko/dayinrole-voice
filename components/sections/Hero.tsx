@@ -51,7 +51,7 @@ export function Hero(){
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="min-w-[160px]">
-                <Link href="/pricing">
+                <Link href="/subscription">
                   View Pricing
                 </Link>
               </Button>

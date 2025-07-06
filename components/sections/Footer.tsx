@@ -8,7 +8,7 @@ const footerLinks = {
   navigation: [
     { name: "Features", href: "#features" },
     { name: "How it Works", href: "#how-it-works" },
-    { name: "Pricing", href: "/pricing" },
+    { name: "Pricing", href: "/subscription" },
     { name: "Dashboard", href: "/dashboard" }
   ],
   legal: [

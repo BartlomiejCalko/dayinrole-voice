@@ -21,12 +21,35 @@ const InterviewContent = () => {
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
   const [dayInRoleTitle, setDayInRoleTitle] = useState<string>('');
   const [dayInRoleId, setDayInRoleId] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleBackToDayInRole = () => {
     if (dayInRoleId) {
       router.push(`/dayinrole/${dayInRoleId}`);
     } else {
       router.push('/dashboard');
+    }
+  };
+
+  const fetchQuestionsFromDatabase = async (questionSetId: string) => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/interview/questions/${questionSetId}?userId=${user.id}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setQuestions(result.data.questions);
+        setDayInRoleTitle(result.data.dayInRoleTitle);
+        setDayInRoleId(result.data.dayInRoleId);
+      } else {
+        console.error('Failed to fetch questions:', result.message);
+      }
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,18 +60,23 @@ const InterviewContent = () => {
   }, [user, isLoaded, router]);
 
   useEffect(() => {
-    // Extract questions from URL parameters
+    // Extract parameters from URL
     const questionsParam = searchParams.get('questions');
     const titleParam = searchParams.get('dayInRoleTitle');
     const idParam = searchParams.get('dayInRoleId');
+    const questionSetIdParam = searchParams.get('questionSetId');
     
     if (questionsParam) {
+      // Load questions from URL parameters (for newly generated questions)
       try {
         const parsedQuestions = JSON.parse(questionsParam);
         setQuestions(parsedQuestions);
       } catch (error) {
         console.error('Error parsing questions:', error);
       }
+    } else if (questionSetIdParam) {
+      // Load questions from database (for reopened interviews)
+      fetchQuestionsFromDatabase(questionSetIdParam);
     }
     
     if (titleParam) {
@@ -58,7 +86,18 @@ const InterviewContent = () => {
     if (idParam) {
       setDayInRoleId(idParam);
     }
-  }, [searchParams]);
+  }, [searchParams, user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+          <p className="text-white mt-4">Loading interview questions...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state while checking authentication
   if (!isLoaded) {

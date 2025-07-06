@@ -1,22 +1,32 @@
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    id: 'basic',
-    name: 'Basic',
-    price: 12,
-    dayInRoleLimit: 10,
-    interviewLimit: 1,
-    questionsPerInterview: 3,
-    stripeProductId: 'prod_basic', // Update this with real product ID from Stripe
-    stripePriceId: 'price_basic' // Update this with real price ID from Stripe
+    id: 'free',
+    name: 'Free Plan',
+    price: 0,
+    dayInRoleLimit: 0, // Can only see examples
+    interviewLimit: 0, // Can only see examples
+    questionsPerInterview: 3, // For examples only
+    stripeProductId: null,
+    stripePriceId: null
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    price: 20,
-    dayInRoleLimit: 20,
-    interviewLimit: 3,
-    questionsPerInterview: 10,
-    stripeProductId: 'prod_premium', // Update this with real product ID from Stripe
-    stripePriceId: 'price_premium' // Update this with real price ID from Stripe
+    id: 'start',
+    name: 'Start Plan',
+    price: 12,
+    dayInRoleLimit: 10,
+    interviewLimit: 5,
+    questionsPerInterview: 5,
+    stripeProductId: 'prod_start', // Update this with real product ID from Stripe
+    stripePriceId: 'price_1234567890abcdef_start' // Update this with real price ID from Stripe
+  },
+  {
+    id: 'pro',
+    name: 'Pro Plan',
+    price: 21,
+    dayInRoleLimit: 30,
+    interviewLimit: 20,
+    questionsPerInterview: 20,
+    stripeProductId: 'prod_pro', // Update this with real product ID from Stripe
+    stripePriceId: 'price_1234567890abcdef_pro' // Update this with real price ID from Stripe
   }
 ]; 

@@ -1,119 +1,124 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
-import { db } from '@/firebase/admin';
+import { createServiceClient } from '@/utils/supabase/server';
 
-export async function POST(request: Request) {
-    try {
-        const { interviewId, userId, transcript } = await request.json();
-
-        if (!interviewId || !userId || !transcript) {
-            return Response.json({ 
-                success: false, 
-                message: "Interview ID, User ID, and transcript are required" 
-            }, { status: 400 });
-        }
-
-        // Get the interview data
-        const interviewDoc = await db.collection("interviews").doc(interviewId).get();
-        
-        if (!interviewDoc.exists) {
-            return Response.json({ success: false, message: "Interview not found" }, { status: 404 });
-        }
-
-        const interviewData = interviewDoc.data();
-        
-        // Verify the interview belongs to the user
-        if (interviewData?.userId !== userId) {
-            return Response.json({ success: false, message: "Unauthorized" }, { status: 403 });
-        }
-
-        // Generate feedback using AI
-        const feedbackPrompt = `
-You are an expert interview coach providing detailed feedback on a job interview.
-
-Interview Details:
-- Role: ${interviewData?.role}
-- Level: ${interviewData?.level}
-- Type: ${interviewData?.type}
-- Tech Stack: ${interviewData?.techstack?.join(', ')}
-
-Questions Asked:
-${interviewData?.questions?.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')}
-
-Interview Transcript:
-${transcript.map((entry: any) => `${entry.role === 'assistant' ? 'Interviewer' : 'Candidate'}: ${entry.content}`).join('\n')}
-
-Please provide a comprehensive feedback analysis in the following JSON format:
-{
-  "totalScore": [number from 1-100],
-  "categoryScores": [
-    {
-      "name": "Technical Skills",
-      "score": [1-100],
-      "comment": "specific feedback"
-    },
-    {
-      "name": "Communication",
-      "score": [1-100], 
-      "comment": "specific feedback"
-    },
-    {
-      "name": "Problem Solving",
-      "score": [1-100],
-      "comment": "specific feedback"
-    },
-    {
-      "name": "Cultural Fit",
-      "score": [1-100],
-      "comment": "specific feedback"
-    }
-  ],
-  "strengths": ["strength 1", "strength 2", "strength 3"],
-  "areasForImprovement": ["area 1", "area 2", "area 3"],
-  "finalAssessment": "detailed overall assessment paragraph"
+interface TranscriptEntry {
+  timestamp: string;
+  speaker: 'user' | 'ai';
+  message: string;
 }
 
-Focus on being constructive, specific, and actionable in your feedback. Consider the candidate's level and the role requirements.
-        `;
+export async function POST(request: Request) {
+  try {
+    const { interviewId, userId, transcript }: { interviewId: string; userId: string; transcript: TranscriptEntry[] } = await request.json();
 
-        const { text: feedbackText } = await generateText({
-            model: google('gemini-2.0-flash-001'),
-            prompt: feedbackPrompt,
-        });
-
-        const feedback = JSON.parse(feedbackText);
-
-        // Save the interview attempt and feedback
-        const interviewAttempt = {
-            interviewId,
-            userId,
-            transcript,
-            feedback,
-            completedAt: new Date().toISOString(),
-        };
-
-        const attemptRef = await db.collection("interview_attempts").add(interviewAttempt);
-
-        // Update the interview's completed attempts count
-        await db.collection("interviews").doc(interviewId).update({
-            completedAttempts: (interviewData?.completedAttempts || 0) + 1,
-            lastAttemptAt: new Date().toISOString(),
-        });
-
-        return Response.json({ 
-            success: true, 
-            data: { 
-                attemptId: attemptRef.id,
-                feedback,
-                ...interviewAttempt 
-            } 
-        }, { status: 200 });
-        
-    } catch (error) {
-        console.error('Error completing interview:', error);
-        return Response.json({ 
-            success: false, 
-            message: "Failed to complete interview" 
-        }, { status: 500 });
+    if (!interviewId || !userId || !transcript) {
+      return Response.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
+
+    const supabase = createServiceClient();
+
+    // Get the interview data
+    const { data: interview, error: interviewError } = await supabase
+      .from('interviews')
+      .select('*')
+      .eq('id', interviewId)
+      .eq('user_id', userId)
+      .single();
+
+    if (interviewError || !interview) {
+      return Response.json({ success: false, message: "Interview not found or unauthorized" }, { status: 404 });
+    }
+
+    // Generate feedback using AI
+    const { text: feedback } = await generateText({
+      model: google('gemini-2.0-flash-001'),
+      maxTokens: 4000,
+      prompt: `
+        You are an expert interview coach. Analyze this interview transcript and provide detailed feedback.
+        
+        Interview Details:
+        - Role: ${interview.role}
+        - Type: ${interview.type}
+        - Level: ${interview.level}
+        - Company: ${interview.company_name || 'N/A'}
+        
+        Transcript:
+        ${transcript.map(entry => `${entry.speaker}: ${entry.message}`).join('\n')}
+        
+        Provide feedback in JSON format with this structure:
+        {
+          "overallScore": 85,
+          "strengths": ["strength1", "strength2", "strength3"],
+          "improvements": ["improvement1", "improvement2", "improvement3"],
+          "detailedFeedback": "Detailed paragraph about performance...",
+          "nextSteps": ["step1", "step2", "step3"]
+        }
+        
+        Return only valid JSON, no other text.
+      `,
+    });
+
+    // Parse feedback
+    let parsedFeedback;
+    try {
+      parsedFeedback = JSON.parse(feedback);
+    } catch (parseError) {
+      console.error('Failed to parse feedback:', parseError);
+      parsedFeedback = {
+        overallScore: 75,
+        strengths: ["Communicated clearly", "Showed enthusiasm", "Asked good questions"],
+        improvements: ["Provide more specific examples", "Elaborate on technical details", "Practice behavioral questions"],
+        detailedFeedback: "Good overall performance with room for improvement in providing specific examples.",
+        nextSteps: ["Practice with more examples", "Review technical concepts", "Prepare STAR method responses"]
+      };
+    }
+
+    // Save the interview attempt
+    const attemptData = {
+      interview_id: interviewId,
+      user_id: userId,
+      transcript: transcript,
+      feedback: parsedFeedback,
+      completed_at: new Date().toISOString(),
+      overall_score: parsedFeedback.overallScore,
+    };
+
+    const { data: savedAttempt, error: saveError } = await supabase
+      .from('interview_attempts')
+      .insert(attemptData)
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('Error saving interview attempt:', saveError);
+      return Response.json({ success: false, message: "Failed to save interview attempt" }, { status: 500 });
+    }
+
+    // Update interview completed attempts count
+    const { error: updateError } = await supabase
+      .from('interviews')
+      .update({ 
+        completed_attempts: (interview.completed_attempts || 0) + 1,
+        last_attempt_at: new Date().toISOString()
+      })
+      .eq('id', interviewId);
+
+    if (updateError) {
+      console.error('Error updating interview:', updateError);
+      // Don't fail the request if this update fails
+    }
+
+    return Response.json({ 
+      success: true, 
+      data: {
+        attemptId: savedAttempt.id,
+        feedback: parsedFeedback
+      }
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('Error completing interview:', error);
+    return Response.json({ success: false, message: "Failed to complete interview" }, { status: 500 });
+  }
 } 

@@ -1,7 +1,6 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
-import { getRandomInterviewCover } from '@/lib/utils';
-import { db } from '@/firebase/admin';
+import { createServiceClient } from '@/utils/supabase/server';
 import { requireInterviewLimit } from '@/lib/subscription/middleware';
 import { incrementInterviewUsage } from '@/lib/subscription/queries';
 
@@ -153,14 +152,24 @@ export async function POST(request: Request) {
             }, { status: 400 });
         }
 
+        const supabase = createServiceClient();
+
         // Get the dayinrole data for context
-        const dayInRoleDoc = await db.collection("dayinroles").doc(dayInRoleId).get();
+        const { data: dayInRole, error: dayInRoleError } = await supabase
+            .from('dayinroles')
+            .select('*')
+            .eq('id', dayInRoleId)
+            .eq('user_id', userId)
+            .single();
         
-        if (!dayInRoleDoc.exists) {
-            return Response.json({ success: false, message: "DayInRole not found" }, { status: 404 });
+        if (dayInRoleError || !dayInRole) {
+            return Response.json({ 
+                success: false, 
+                message: "Day in role not found or unauthorized" 
+            }, { status: 404 });
         }
 
-        const dayInRoleData = dayInRoleDoc.data();
+        const dayInRoleData = dayInRole;
 
         // Get the language from dayinrole if explicitly set, otherwise detect from content
         let detectedLanguage = dayInRoleData?.language || 'english';
@@ -265,18 +274,20 @@ Return ONLY a JSON object with this exact format:
 
         // Check for existing interviews to ensure uniqueness
         console.log('Checking for existing interviews to ensure question uniqueness...');
-        const existingInterviewsSnapshot = await db.collection("interviews")
-            .where("dayInRoleId", "==", dayInRoleId)
-            .where("userId", "==", userId)
-            .get();
+        const { data: existingInterviews, error: existingError } = await supabase
+            .from('interviews')
+            .select('questions')
+            .eq('dayinrole_id', dayInRoleId)
+            .eq('user_id', userId);
 
         const existingQuestions: string[] = [];
-        existingInterviewsSnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.questions && Array.isArray(data.questions)) {
-                existingQuestions.push(...data.questions);
-            }
-        });
+        if (!existingError && existingInterviews) {
+            existingInterviews.forEach((interview) => {
+                if (interview.questions && Array.isArray(interview.questions)) {
+                    existingQuestions.push(...interview.questions);
+                }
+            });
+        }
 
         console.log(`Found ${existingQuestions.length} existing questions to avoid`);
 
@@ -497,25 +508,32 @@ ${detectedLanguage === 'norwegian' ? '["Kan du fortelle meg om din yrkeserfaring
         }
 
         const interview = {
+            user_id: userId,
+            dayinrole_id: dayInRoleId,
             role,
             type: interviewType,
             level,
             techstack: techstack ? techstack.split(",").map((t: string) => t.trim()) : [],
             questions,
-            userId,
-            dayInRoleId,
-            companyName,
-            questionCount: parseInt(questionCount),
-            language: detectedLanguage,
             finalized: true,
-            coverImage: getRandomInterviewCover(),
-            createdAt: new Date().toISOString(),
-            completedAttempts: 0, // Track how many times user has taken this interview
+            created_at: new Date().toISOString(),
+            completed_attempts: 0, // Track how many times user has taken this interview
         };
 
-        console.log('Creating interview document in Firestore...');
-        const docRef = await db.collection("interviews").add(interview);
-        console.log('Interview created successfully with ID:', docRef.id);
+        console.log('Creating interview document in Supabase...');
+        const { data: savedInterview, error: saveError } = await supabase
+            .from('interviews')
+            .insert(interview)
+            .select()
+            .single();
+
+        if (saveError) {
+            console.error('Error saving interview:', saveError);
+            return Response.json({ 
+                success: false, 
+                message: "Failed to save interview" 
+            }, { status: 500 });
+        }
         
         // Increment usage after successful generation
         try {
@@ -528,13 +546,13 @@ ${detectedLanguage === 'norwegian' ? '["Kan du fortelle meg om din yrkeserfaring
         return Response.json({ 
             success: true, 
             data: { 
-                id: docRef.id, 
+                id: savedInterview.id,
                 ...interview 
             } 
         }, { status: 200 });
         
     } catch (error) {
-        console.error('Error generating interview from dayinrole:', error);
+        console.error('Error generating interview from day in role:', error);
         
         // Provide more specific error messages
         let errorMessage = "Failed to generate interview";

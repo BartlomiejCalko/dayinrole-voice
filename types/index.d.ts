@@ -206,33 +206,35 @@ interface SubscriptionPlan {
   dayInRoleLimit: number;
   interviewLimit: number;
   questionsPerInterview: number;
-  stripeProductId: string;
-  stripePriceId: string;
+  stripeProductId: string | null;
+  stripePriceId: string | null;
 }
 
 interface UserSubscription {
   id: string;
-  userId: string;
-  planId: string;
-  stripeCustomerId: string;
-  stripeSubscriptionId: string;
+  user_id: string;
+  plan_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   status: 'active' | 'canceled' | 'past_due' | 'unpaid';
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  cancelAtPeriodEnd: boolean;
-  createdAt: string;
-  updatedAt: string;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface UsageTracking {
   id: string;
-  userId: string;
-  subscriptionId: string;
-  periodStart: string;
-  periodEnd: string;
-  dayInRoleUsed: number;
-  interviewsUsed: number;
-  resetAt: string;
+  user_id: string;
+  subscription_id: string | null;
+  period_start: string;
+  period_end: string;
+  dayinrole_used: number;
+  interviews_used: number;
+  reset_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface SubscriptionLimits {

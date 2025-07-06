@@ -53,7 +53,7 @@ const InterviewPage = () => {
       if (!params.id || !user) return;
 
       try {
-        const response = await fetch(`/api/interviews/${params.id}?userId=${user.uid}`);
+        const response = await fetch(`/api/interviews/${params.id}?userId=${user.id}`);
         const result = await response.json();
 
         if (result.success) {
@@ -67,7 +67,7 @@ const InterviewPage = () => {
           // Fetch dayinrole language if dayInRoleId exists
           if (result.data.dayInRoleId) {
             try {
-              const dayInRoleResponse = await fetch(`/api/dayinrole/${result.data.dayInRoleId}?userId=${user.uid}`);
+              const dayInRoleResponse = await fetch(`/api/dayinrole/${result.data.dayInRoleId}?userId=${user.id}`);
               const dayInRoleResult = await dayInRoleResponse.json();
               
               if (dayInRoleResult.success && dayInRoleResult.data.language) {
@@ -109,7 +109,7 @@ const InterviewPage = () => {
         },
         body: JSON.stringify({
           interviewId: interview.id,
-          userId: user.uid,
+          userId: user.id,
           transcript,
         }),
       });

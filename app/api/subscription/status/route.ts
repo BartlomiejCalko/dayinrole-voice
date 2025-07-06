@@ -1,15 +1,18 @@
 import { NextRequest } from 'next/server';
 import { verifyAuth } from '@/lib/auth/verify';
-import { getSubscriptionByUserId } from '@/lib/subscription/queries';
+import { getUserSubscriptionStatus } from '@/lib/subscription';
 
 export async function GET(req: NextRequest) {
   try {
     const user = await verifyAuth();
-    const subscription = await getSubscriptionByUserId(user.uid);
+    const subscriptionStatus = await getUserSubscriptionStatus(user.uid);
     
     return Response.json({ 
-      subscription,
-      hasActiveSubscription: subscription?.status === 'active' 
+      subscription: subscriptionStatus.subscription,
+      isFreePlan: subscriptionStatus.isFreePlan,
+      planId: subscriptionStatus.planId,
+      limits: subscriptionStatus.limits,
+      hasActiveSubscription: subscriptionStatus.subscription?.status === 'active' 
     });
   } catch (error) {
     console.error('Error fetching subscription status:', error);

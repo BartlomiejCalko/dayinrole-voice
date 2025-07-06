@@ -68,7 +68,7 @@ const InterviewFeedbackPage = () => {
 
       try {
         // Fetch the latest feedback for this interview
-        const response = await fetch(`/api/interviews/${params.id}/feedback?userId=${user.uid}`);
+        const response = await fetch(`/api/interviews/${params.id}/feedback?userId=${user.id}`);
         const result = await response.json();
 
         if (result.success) {

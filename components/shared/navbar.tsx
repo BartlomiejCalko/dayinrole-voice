@@ -22,11 +22,6 @@ const routes = [
   {
     name: "Subscription",
     path: "/subscription",
-    public: false,
-  },
-  {
-    name: "Pricing",
-    path: "/pricing",
     public: true,
   },
 ];

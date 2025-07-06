@@ -1,26 +1,42 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { getRandomInterviewCover } from '@/lib/utils';
-import { db } from '@/firebase/admin';
+import { createServiceClient } from '@/utils/supabase/server';
 import { scrapeJobOffer, isJobUrl } from '@/lib/scrapeJobOffer';
 import { requireDayInRoleLimit } from '@/lib/subscription/middleware';
 import { incrementDayInRoleUsage } from '@/lib/subscription/queries';
+import { NextRequest } from 'next/server';
+import { checkSubscriptionLimits } from '@/lib/subscription';
 
-export async function POST(request: Request) {
-    // Check subscription limits first
-    const limitCheck = await requireDayInRoleLimit(request as any);
-    if (limitCheck) return limitCheck;
-
-    const { jobOfferText, userId, language = 'original', inputType } = await request.json();
-
-    console.log('Language parameter received:', language); // Debug log
-    console.log('Input type:', inputType); // Debug log
-
-    if (!jobOfferText || !userId) {
-        return Response.json({ success: false, message: "Job offer text and user ID are required" }, { status: 400 });
-    }
-
+export async function POST(request: NextRequest) {
     try {
+        const { jobOfferText, userId, language = 'english', inputType = 'text' } = await request.json();
+
+        if (!jobOfferText || !userId) {
+            return Response.json({ 
+                success: false, 
+                message: 'Job offer text and user ID are required' 
+            }, { status: 400 });
+        }
+
+        // Check subscription limits
+        const subscriptionCheck = await checkSubscriptionLimits(userId, 'dayinrole');
+        if (!subscriptionCheck.allowed) {
+            return Response.json({ 
+                success: false, 
+                message: subscriptionCheck.reason,
+                requiresUpgrade: true,
+                planId: subscriptionCheck.planId
+            }, { status: 403 });
+        }
+
+        // Check subscription limits first
+        const limitCheck = await requireDayInRoleLimit(request as any);
+        if (limitCheck) return limitCheck;
+
+        console.log('Language parameter received:', language); // Debug log
+        console.log('Input type:', inputType); // Debug log
+
         let finalJobOfferText = jobOfferText;
         
         // If input is a URL, scrape the job content
@@ -288,13 +304,13 @@ REMEMBER: Return ONLY the JSON object, no other text. PRIORITIZE CONCISENESS AND
 
         // Validate and sanitize the parsed data (NO CHARACTER LIMITS - preserve full content)
         const dayInRole = {
-            companyName: (parsedData.companyName || 'Unknown Company').toString(),
-            companyLogo: parsedData.companyLogo && typeof parsedData.companyLogo === 'string' && parsedData.companyLogo.startsWith('http') 
+            company_name: (parsedData.companyName || 'Unknown Company').toString(),
+            company_logo: parsedData.companyLogo && typeof parsedData.companyLogo === 'string' && parsedData.companyLogo.startsWith('http') 
                 ? parsedData.companyLogo 
                 : null,
             position: (parsedData.position || 'Unknown Position').toString(),
             description: (parsedData.description || 'No description available').toString(),
-                            challenges: Array.isArray(parsedData.challenges) 
+            challenges: Array.isArray(parsedData.challenges) 
                 ? parsedData.challenges.slice(0, 3).map((c: any) => {
                     if (typeof c === 'object' && c.challenge) {
                         return {
@@ -339,14 +355,23 @@ REMEMBER: Return ONLY the JSON object, no other text. PRIORITIZE CONCISENESS AND
             techstack: Array.isArray(parsedData.techstack) 
                 ? parsedData.techstack.slice(0, 10).map((t: any) => t.toString())
                 : [],
-            userId: userId,
-            coverImage: getRandomInterviewCover(),
-            createdAt: new Date().toISOString(),
+            user_id: userId,
+            cover_image: getRandomInterviewCover(),
             language: language,
         };
 
-        // Save to Firebase
-        const docRef = await db.collection("dayinroles").add(dayInRole);
+        // Save to Supabase
+        const supabase = createServiceClient();
+        const { data, error } = await supabase
+            .from('dayinroles')
+            .insert(dayInRole)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error saving to Supabase:', error);
+            return Response.json({ success: false, message: "Failed to save day in role" }, { status: 500 });
+        }
         
         // Increment usage after successful generation
         try {
@@ -358,14 +383,14 @@ REMEMBER: Return ONLY the JSON object, no other text. PRIORITIZE CONCISENESS AND
         
         return Response.json({ 
             success: true, 
-            data: { 
-                id: docRef.id, 
-                ...dayInRole 
-            } 
+            data: data
         }, { status: 200 });
         
     } catch (error) {
-        console.error('Error generating day in role:', error);
-        return Response.json({ success: false, message: "Failed to generate day in role" }, { status: 500 });
+        console.error('Error in generate API:', error);
+        return Response.json({ 
+            success: false, 
+            message: 'Internal server error' 
+        }, { status: 500 });
     }
 } 

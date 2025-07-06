@@ -29,7 +29,7 @@ const DayInRoleCard = ({
               alt={`${companyName} logo`} 
               width={90} 
               height={90} 
-              className="rounded-full object-cover size-[90px] bg-white p-2" 
+              className="rounded-full object-cover size-[90px] bg-white p-2 items-center justify-center" 
               onError={(e) => {
                 // Fallback to company name if logo fails to load
                 e.currentTarget.style.display = 'none';
@@ -40,7 +40,7 @@ const DayInRoleCard = ({
           
           {/* Company Name Fallback */}
           <div className={`${companyLogo ? 'hidden' : 'flex'} size-[90px] rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 items-center justify-center`}>
-            <span className="text-lg font-bold text-primary text-center leading-tight px-2">
+            <span className="text-md font-bold text-primary leading-none select-none text-center flex items-center justify-center w-full h-full">
               {companyName.split(' ').map(word => word.charAt(0)).join('').slice(0, 3).toUpperCase()}
             </span>
           </div>

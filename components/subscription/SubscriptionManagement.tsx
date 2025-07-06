@@ -60,8 +60,8 @@ export const SubscriptionManagement = ({
     }
   };
 
-  const getStatusBadge = (status: string, cancelAtPeriodEnd: boolean) => {
-    if (cancelAtPeriodEnd) {
+  const getStatusBadge = (status: string, cancel_at_period_end: boolean | null) => {
+    if (cancel_at_period_end) {
       return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Anulowanie</Badge>;
     }
 
@@ -79,8 +79,8 @@ export const SubscriptionManagement = ({
     }
   };
 
-  const getStatusIcon = (status: string, cancelAtPeriodEnd: boolean) => {
-    if (cancelAtPeriodEnd) {
+  const getStatusIcon = (status: string, cancel_at_period_end: boolean | null) => {
+    if (cancel_at_period_end) {
       return <AlertCircle className="w-5 h-5 text-orange-600" />;
     }
 
@@ -107,7 +107,7 @@ export const SubscriptionManagement = ({
 
   const getCurrentPlan = () => {
     if (!subscription) return null;
-    return SUBSCRIPTION_PLANS.find(plan => plan.id === subscription.planId);
+    return SUBSCRIPTION_PLANS.find(plan => plan.id === subscription.plan_id);
   };
 
   if (!subscription) {
@@ -131,14 +131,14 @@ export const SubscriptionManagement = ({
             <CreditCard className="w-5 h-5" />
             <span>Moja subskrypcja</span>
           </CardTitle>
-          {getStatusBadge(subscription.status, subscription.cancelAtPeriodEnd)}
+          {getStatusBadge(subscription.status, subscription.cancel_at_period_end)}
         </div>
       </CardHeader>
 
       <CardContent className="space-y-6">
         {/* Current Plan Info */}
         <div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg">
-          {getStatusIcon(subscription.status, subscription.cancelAtPeriodEnd)}
+          {getStatusIcon(subscription.status, subscription.cancel_at_period_end)}
           <div className="flex-1">
             <h3 className="font-semibold text-lg">
               {currentPlan?.name || 'Nieznany plan'}
@@ -157,7 +157,7 @@ export const SubscriptionManagement = ({
               <span className="font-medium">Początek okresu:</span>
             </div>
             <p className="text-muted-foreground ml-6">
-              {formatDate(subscription.currentPeriodStart)}
+              {formatDate(subscription.current_period_start)}
             </p>
           </div>
 
@@ -167,7 +167,7 @@ export const SubscriptionManagement = ({
               <span className="font-medium">Koniec okresu:</span>
             </div>
             <p className="text-muted-foreground ml-6">
-              {formatDate(subscription.currentPeriodEnd)}
+              {formatDate(subscription.current_period_end)}
             </p>
           </div>
         </div>
@@ -194,11 +194,11 @@ export const SubscriptionManagement = ({
         )}
 
         {/* Cancellation Warning */}
-        {subscription.cancelAtPeriodEnd && (
+        {subscription.cancel_at_period_end && (
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Twoja subskrypcja zostanie anulowana dnia {formatDate(subscription.currentPeriodEnd)}. 
+              Twoja subskrypcja zostanie anulowana dnia {formatDate(subscription.current_period_end)}. 
               Do tego czasu nadal masz dostęp do wszystkich funkcji.
             </AlertDescription>
           </Alert>
@@ -216,7 +216,7 @@ export const SubscriptionManagement = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
-          {subscription.status === 'active' && !subscription.cancelAtPeriodEnd && (
+          {subscription.status === 'active' && !subscription.cancel_at_period_end && (
             <Button
               variant="destructive"
               onClick={handleCancelSubscription}

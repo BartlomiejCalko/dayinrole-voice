@@ -1,4 +1,4 @@
-import { db } from '@/firebase/admin';
+import { createServiceClient } from '@/utils/supabase/server';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -10,25 +10,42 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             return Response.json({ success: false, message: "User ID is required" }, { status: 400 });
         }
 
-        const doc = await db.collection("interviews").doc(id).get();
+        const supabase = createServiceClient();
         
-        if (!doc.exists) {
+        const { data: interview, error } = await supabase
+            .from('interviews')
+            .select('*')
+            .eq('id', id)
+            .single();
+        
+        if (error || !interview) {
             return Response.json({ success: false, message: "Interview not found" }, { status: 404 });
         }
-
-        const interviewData = doc.data();
         
         // Verify the interview belongs to the user
-        if (interviewData?.userId !== userId) {
+        if (interview.user_id !== userId) {
             return Response.json({ success: false, message: "Unauthorized" }, { status: 403 });
         }
 
+        // Transform data to match expected format
+        const transformedData = {
+            id: interview.id,
+            userId: interview.user_id,
+            role: interview.role,
+            type: interview.type,
+            level: interview.level,
+            questions: interview.questions,
+            techstack: interview.techstack,
+            createdAt: interview.created_at,
+            dayInRoleId: interview.dayinrole_id,
+            companyName: null, // Not available in schema
+            questionCount: interview.questions?.length || 0,
+            completedAttempts: interview.completed_attempts || 0,
+        };
+
         return Response.json({ 
             success: true, 
-            data: { 
-                id: doc.id, 
-                ...interviewData 
-            } 
+            data: transformedData
         }, { status: 200 });
         
     } catch (error) {

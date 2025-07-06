@@ -1,23 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/firebase/admin';
-
-interface InterviewQuestion {
-  id: string;
-  question: string;
-  sampleAnswer: string;
-  category: string;
-}
-
-interface InterviewQuestionSet {
-  id: string;
-  dayInRoleId: string;
-  userId: string;
-  questions: InterviewQuestion[];
-  numberOfQuestions: number;
-  language: string;
-  createdAt: string;
-  dayInRoleTitle: string;
-}
+import { createServiceClient } from '@/utils/supabase/server';
+import { NextRequest } from 'next/server';
 
 export async function GET(
   request: NextRequest,
@@ -29,50 +11,47 @@ export async function GET(
     const userId = searchParams.get('userId');
 
     if (!userId) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "User ID is required" 
-      }, { status: 400 });
+      return Response.json({ success: false, message: "User ID is required" }, { status: 400 });
     }
 
-    if (!dayInRoleId) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "Day in role ID is required" 
-      }, { status: 400 });
+    const supabase = createServiceClient();
+
+    // Fetch interviews for this day-in-role
+    const { data: interviews, error } = await supabase
+      .from('interviews')
+      .select('*')
+      .eq('dayinrole_id', dayInRoleId)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching interviews:', error);
+      return Response.json({ success: false, message: "Failed to fetch interviews" }, { status: 500 });
     }
 
-    // Fetch interview question sets for this dayInRole and user
-    // Note: Using simple where clauses first, then sort in memory to avoid index requirements
-    const snapshot = await db
-      .collection('interviewQuestions')
-      .where('dayInRoleId', '==', dayInRoleId)
-      .where('userId', '==', userId)
-      .get();
+    // Transform data to match expected format
+    const transformedData = (interviews || []).map(interview => ({
+      id: interview.id,
+      dayInRoleId: interview.dayinrole_id,
+      userId: interview.user_id,
+      questions: interview.questions,
+      numberOfQuestions: interview.questions?.length || 0,
+      language: 'english', // Default since language isn't stored in interviews table
+      createdAt: interview.created_at,
+      dayInRoleTitle: interview.role, // Use role as title since company_name doesn't exist
+      role: interview.role,
+      type: interview.type,
+      level: interview.level,
+      techstack: interview.techstack,
+    }));
 
-    const questionSets: InterviewQuestionSet[] = [];
-    
-    snapshot.forEach((doc) => {
-      questionSets.push({
-        id: doc.id,
-        ...doc.data()
-      } as InterviewQuestionSet);
-    });
-
-    // Sort by createdAt in memory (newest first)
-    questionSets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    return NextResponse.json({ 
+    return Response.json({ 
       success: true, 
-      data: questionSets,
-      message: `Found ${questionSets.length} interview question sets`
+      data: transformedData
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Error fetching interview questions:', error);
-    return NextResponse.json({ 
-      success: false, 
-      message: "Failed to fetch interview questions" 
-    }, { status: 500 });
+    console.error('Error fetching interviews:', error);
+    return Response.json({ success: false, message: "Failed to fetch interviews" }, { status: 500 });
   }
 } 

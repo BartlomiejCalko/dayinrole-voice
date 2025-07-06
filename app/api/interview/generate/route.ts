@@ -1,6 +1,6 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
-import { db } from '@/firebase/admin';
+import { createServiceClient } from '@/utils/supabase/server';
 
 interface InterviewQuestion {
   id: string;
@@ -322,26 +322,81 @@ ${detectedLanguage === 'norwegian' ? `[
             category: q.category
         }));
 
-        // Save to database
-        const interviewQuestionSet: Omit<InterviewQuestionSet, 'id'> = {
-            dayInRoleId: dayInRole.id,
-            userId,
-            questions,
-            numberOfQuestions: numQuestions,
-            language: detectedLanguage,
-            createdAt: new Date().toISOString(),
-            dayInRoleTitle: `${dayInRole.position} at ${dayInRole.companyName}`
+        // Save to interviews table (using actual schema fields)
+        const interviewData = {
+            user_id: userId,
+            dayinrole_id: dayInRole.id,
+            role: dayInRole.position,
+            level: 'mid', // You can enhance this to detect level from dayInRole
+            type: 'general',
+            questions: questions.map(q => q.question), // Store just the question strings
+            techstack: dayInRole.techstack || [],
+            finalized: true,
+            completed_attempts: 0,
+            created_at: new Date().toISOString(),
         };
 
-        console.log('Creating interview document in Firestore...');
-        const docRef = await db.collection('interviewQuestions').add(interviewQuestionSet);
-        console.log('Interview created successfully with ID:', docRef.id);
+        console.log('Creating interview document in Supabase...');
+        const supabase = createServiceClient();
+        const { data: savedInterview, error: saveError } = await supabase
+            .from('interviews')
+            .insert(interviewData)
+            .select()
+            .single();
+
+        if (saveError) {
+            console.error('Error saving interview:', saveError);
+            return Response.json({ 
+                success: false, 
+                message: "Failed to save interview questions to database" 
+            }, { status: 500 });
+        }
+
+        console.log('Interview created successfully with ID:', savedInterview.id);
+
+        // Also save full question objects to interview_questions table
+        const questionSetData = {
+            dayinrole_id: dayInRole.id,
+            user_id: userId,
+            questions: questions, // Store full question objects with sample answers
+            number_of_questions: questions.length,
+            language: detectedLanguage,
+            dayinrole_title: `${dayInRole.position} at ${dayInRole.companyName}`,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        };
+
+        const { data: savedQuestionSet, error: questionSetError } = await supabase
+            .from('interview_questions')
+            .insert(questionSetData)
+            .select()
+            .single();
+
+        if (questionSetError) {
+            console.error('Error saving question set:', questionSetError);
+            // Don't fail the entire request if interview_questions save fails
+            // since we already have the interview saved
+        }
+
+        console.log('Question set created successfully with ID:', savedQuestionSet?.id);
 
         return Response.json({ 
             success: true, 
             questions,
-            questionSetId: docRef.id,
+            questionSetId: savedQuestionSet?.id || savedInterview.id,
+            interviewId: savedInterview.id,
             language: detectedLanguage,
+            interview: {
+                id: savedInterview.id,
+                role: savedInterview.role,
+                type: savedInterview.type,
+                level: savedInterview.level,
+                questions: savedInterview.questions,
+                techstack: savedInterview.techstack,
+                dayInRoleId: savedInterview.dayinrole_id,
+                userId: savedInterview.user_id,
+                createdAt: savedInterview.created_at,
+            },
             message: `Generated ${questions.length} interview questions successfully in ${detectedLanguage}`
         }, { status: 200 });
 

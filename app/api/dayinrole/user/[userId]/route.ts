@@ -1,4 +1,4 @@
-import { db } from '@/firebase/admin';
+import { createServiceClient } from '@/utils/supabase/server';
 import { NextRequest } from 'next/server';
 
 export async function GET(
@@ -14,57 +14,80 @@ export async function GET(
       return Response.json({ success: false, message: "User ID is required" }, { status: 400 });
     }
 
+    const supabase = createServiceClient();
+    
     // First, try the exact userId
-    console.log('API: Querying dayinroles collection with exact userId...');
-    let querySnapshot = await db
-      .collection("dayinroles")
-      .where("userId", "==", userId)
-      .get();
+    console.log('API: Querying dayinroles table with exact userId...');
+    let { data: dayInRoles, error } = await supabase
+      .from('dayinroles')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-    console.log('API: Query with exact userId completed, found', querySnapshot.size, 'documents');
+    console.log('API: Query with exact userId completed, found', dayInRoles?.length || 0, 'documents');
 
     // If no results and the userId contains 'I', try with 'l' (common case sensitivity issue)
-    if (querySnapshot.size === 0 && userId.includes('I')) {
+    if ((!dayInRoles || dayInRoles.length === 0) && userId.includes('I')) {
       const alternativeUserId = userId.replace(/I/g, 'l');
       console.log('API: Trying alternative userId:', alternativeUserId);
       
-      querySnapshot = await db
-        .collection("dayinroles")
-        .where("userId", "==", alternativeUserId)
-        .get();
+      const { data: altData, error: altError } = await supabase
+        .from('dayinroles')
+        .select('*')
+        .eq('user_id', alternativeUserId)
+        .order('created_at', { ascending: false });
       
-      console.log('API: Query with alternative userId completed, found', querySnapshot.size, 'documents');
+      if (!altError && altData) {
+        dayInRoles = altData;
+        console.log('API: Query with alternative userId completed, found', dayInRoles.length, 'documents');
+      }
     }
 
     // If still no results and the userId contains 'l', try with 'I'
-    if (querySnapshot.size === 0 && userId.includes('l')) {
+    if ((!dayInRoles || dayInRoles.length === 0) && userId.includes('l')) {
       const alternativeUserId = userId.replace(/l/g, 'I');
       console.log('API: Trying alternative userId:', alternativeUserId);
       
-      querySnapshot = await db
-        .collection("dayinroles")
-        .where("userId", "==", alternativeUserId)
-        .get();
+      const { data: altData, error: altError } = await supabase
+        .from('dayinroles')
+        .select('*')
+        .eq('user_id', alternativeUserId)
+        .order('created_at', { ascending: false });
       
-      console.log('API: Query with alternative userId completed, found', querySnapshot.size, 'documents');
+      if (!altError && altData) {
+        dayInRoles = altData;
+        console.log('API: Query with alternative userId completed, found', dayInRoles.length, 'documents');
+      }
     }
 
-    const dayInRoles: DayInRole[] = [];
-    querySnapshot.forEach((doc) => {
-      console.log('API: Processing document:', doc.id);
-      dayInRoles.push({
-        id: doc.id,
-        ...doc.data()
-      } as DayInRole);
-    });
+    if (error) {
+      console.error('API Error details:', error);
+      return Response.json({ 
+        success: false, 
+        message: `Failed to fetch day in roles: ${error.message}` 
+      }, { status: 500 });
+    }
 
-    // Sort by createdAt in JavaScript instead of Firestore
-    dayInRoles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Transform data to match expected format
+    const transformedData = (dayInRoles || []).map(role => ({
+      id: role.id,
+      userId: role.user_id,
+      companyName: role.company_name,
+      companyLogo: role.company_logo,
+      position: role.position,
+      description: role.description,
+      challenges: role.challenges,
+      requirements: role.requirements,
+      techstack: role.techstack,
+      coverImage: role.cover_image,
+      language: role.language,
+      createdAt: role.created_at,
+    }));
 
-    console.log('API: Returning', dayInRoles.length, 'day-in-roles');
+    console.log('API: Returning', transformedData.length, 'day-in-roles');
     return Response.json({ 
       success: true, 
-      data: dayInRoles 
+      data: transformedData 
     }, { status: 200 });
 
   } catch (error) {

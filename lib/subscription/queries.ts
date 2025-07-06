@@ -1,15 +1,23 @@
-import { db } from '@/firebase/admin';
+import { createServiceClient } from '@/utils/supabase/server';
 import { SUBSCRIPTION_PLANS } from '@/constants/subscription-plans';
+import { verifyAuth } from '@/lib/auth/verify';
+import { ensureUserExists } from '@/lib/auth/user-management';
 
 export const getSubscriptionByUserId = async (userId: string): Promise<UserSubscription | null> => {
   try {
-    const subscriptionRef = db.collection('subscriptions').where('userId', '==', userId);
-    const snapshot = await subscriptionRef.get();
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
     
-    if (snapshot.empty) return null;
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
+      console.error('Error fetching subscription:', error);
+      return null;
+    }
     
-    const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as UserSubscription;
+    return data || null;
   } catch (error) {
     console.error('Error fetching subscription:', error);
     return null;
@@ -18,32 +26,78 @@ export const getSubscriptionByUserId = async (userId: string): Promise<UserSubsc
 
 export const getUsageTracking = async (userId: string): Promise<UsageTracking | null> => {
   try {
+    const supabase = createServiceClient();
     const now = new Date();
     const currentPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
     
-    const usageRef = db.collection('usage_tracking')
-      .where('userId', '==', userId)
-      .where('periodStart', '==', currentPeriodStart.toISOString());
+    const { data, error } = await supabase
+      .from('usage_tracking')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('period_start', currentPeriodStart.toISOString())
+      .single();
     
-    const snapshot = await usageRef.get();
-    
-    if (snapshot.empty) {
+    if (error && error.code === 'PGRST116') {
+      // Ensure user exists in database before creating usage tracking (fallback for existing users)
+      try {
+        const authUser = await verifyAuth();
+        await ensureUserExists(authUser);
+        
+        // Also ensure they have a free subscription if they don't have any
+        const existingSubscription = await getSubscriptionByUserId(userId);
+        if (!existingSubscription) {
+          const freeSubscription = {
+            user_id: userId,
+            plan_id: 'free',
+            stripe_customer_id: null,
+            stripe_subscription_id: null,
+            status: 'active' as const,
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
+            cancel_at_period_end: false,
+          };
+          
+          await supabase.from('subscriptions').upsert(freeSubscription, {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          });
+          console.log('Created fallback free subscription for existing user:', userId);
+        }
+      } catch (userError) {
+        console.error('Error ensuring user exists for usage tracking:', userError);
+        return null;
+      }
+      
       // Create new usage tracking for current period
-      const newUsage: Partial<UsageTracking> = {
-        userId,
-        periodStart: currentPeriodStart.toISOString(),
-        periodEnd: new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString(),
-        dayInRoleUsed: 0,
-        interviewsUsed: 0,
-        resetAt: new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString(),
+      const newUsage = {
+        user_id: userId,
+        period_start: currentPeriodStart.toISOString(),
+        period_end: new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString(),
+        dayinrole_used: 0,
+        interviews_used: 0,
+        reset_at: new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString(),
       };
       
-      const docRef = await db.collection('usage_tracking').add(newUsage);
-      return { id: docRef.id, ...newUsage } as UsageTracking;
+      const { data: newData, error: insertError } = await supabase
+        .from('usage_tracking')
+        .insert(newUsage)
+        .select()
+        .single();
+      
+      if (insertError) {
+        console.error('Error creating usage tracking:', insertError);
+        return null;
+      }
+      
+      return newData;
     }
     
-    const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as UsageTracking;
+    if (error) {
+      console.error('Error fetching usage tracking:', error);
+      return null;
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching usage tracking:', error);
     return null;
@@ -67,24 +121,24 @@ export const checkSubscriptionLimits = async (userId: string): Promise<Subscript
       };
     }
     
-    const plan = SUBSCRIPTION_PLANS.find(p => p.id === subscription.planId);
+    const plan = SUBSCRIPTION_PLANS.find(p => p.id === subscription.plan_id);
     if (!plan) {
       throw new Error('Invalid subscription plan');
     }
     
     const currentUsage = usage || {
-      dayInRoleUsed: 0,
-      interviewsUsed: 0,
+      dayinrole_used: 0,
+      interviews_used: 0,
     };
     
     return {
       dayInRoleLimit: plan.dayInRoleLimit,
-      dayInRoleUsed: currentUsage.dayInRoleUsed,
+      dayInRoleUsed: currentUsage.dayinrole_used,
       interviewLimit: plan.interviewLimit,
-      interviewsUsed: currentUsage.interviewsUsed,
+      interviewsUsed: currentUsage.interviews_used,
       questionsPerInterview: plan.questionsPerInterview,
-      canGenerateDayInRole: currentUsage.dayInRoleUsed < plan.dayInRoleLimit,
-      canGenerateInterview: currentUsage.interviewsUsed < plan.interviewLimit,
+      canGenerateDayInRole: currentUsage.dayinrole_used < plan.dayInRoleLimit,
+      canGenerateInterview: currentUsage.interviews_used < plan.interviewLimit,
     };
   } catch (error) {
     console.error('Error checking subscription limits:', error);
@@ -108,9 +162,18 @@ export const incrementDayInRoleUsage = async (userId: string): Promise<void> => 
       throw new Error('Usage tracking not found');
     }
     
-    await db.collection('usage_tracking').doc(usage.id).update({
-      dayInRoleUsed: usage.dayInRoleUsed + 1,
-    });
+    const supabase = createServiceClient();
+    const { error } = await supabase
+      .from('usage_tracking')
+      .update({
+        dayinrole_used: usage.dayinrole_used + 1,
+      })
+      .eq('id', usage.id);
+    
+    if (error) {
+      console.error('Error incrementing day in role usage:', error);
+      throw error;
+    }
   } catch (error) {
     console.error('Error incrementing day in role usage:', error);
     throw error;
@@ -124,9 +187,18 @@ export const incrementInterviewUsage = async (userId: string): Promise<void> => 
       throw new Error('Usage tracking not found');
     }
     
-    await db.collection('usage_tracking').doc(usage.id).update({
-      interviewsUsed: usage.interviewsUsed + 1,
-    });
+    const supabase = createServiceClient();
+    const { error } = await supabase
+      .from('usage_tracking')
+      .update({
+        interviews_used: usage.interviews_used + 1,
+      })
+      .eq('id', usage.id);
+    
+    if (error) {
+      console.error('Error incrementing interview usage:', error);
+      throw error;
+    }
   } catch (error) {
     console.error('Error incrementing interview usage:', error);
     throw error;
@@ -140,21 +212,30 @@ export const createSubscription = async (
   planId: string
 ): Promise<string> => {
   try {
-    const subscriptionData: Partial<UserSubscription> = {
-      userId,
-      planId,
-      stripeCustomerId,
-      stripeSubscriptionId,
-      status: 'active',
-      currentPeriodStart: new Date().toISOString(),
-      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-      cancelAtPeriodEnd: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    const subscriptionData = {
+      user_id: userId,
+      plan_id: planId,
+      stripe_customer_id: stripeCustomerId,
+      stripe_subscription_id: stripeSubscriptionId,
+      status: 'active' as const,
+      current_period_start: new Date().toISOString(),
+      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      cancel_at_period_end: false,
     };
     
-    const docRef = await db.collection('subscriptions').add(subscriptionData);
-    return docRef.id;
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .insert(subscriptionData)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating subscription:', error);
+      throw error;
+    }
+    
+    return data.id;
   } catch (error) {
     console.error('Error creating subscription:', error);
     throw error;
@@ -167,23 +248,46 @@ export const updateSubscriptionStatus = async (
   updates: Partial<UserSubscription> = {}
 ): Promise<void> => {
   try {
-    const subscriptionRef = db.collection('subscriptions')
-      .where('stripeSubscriptionId', '==', stripeSubscriptionId);
+    const supabase = createServiceClient();
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        status,
+        updated_at: new Date().toISOString(),
+        ...updates,
+      })
+      .eq('stripe_subscription_id', stripeSubscriptionId);
     
-    const snapshot = await subscriptionRef.get();
-    
-    if (snapshot.empty) {
-      throw new Error('Subscription not found');
+    if (error) {
+      console.error('Error updating subscription status:', error);
+      throw error;
     }
-    
-    const doc = snapshot.docs[0];
-    await doc.ref.update({
-      status,
-      updatedAt: new Date().toISOString(),
-      ...updates,
-    });
   } catch (error) {
     console.error('Error updating subscription status:', error);
+    throw error;
+  }
+};
+
+export const updateSubscriptionByUserId = async (
+  userId: string,
+  updates: Partial<UserSubscription>
+): Promise<void> => {
+  try {
+    const supabase = createServiceClient();
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        updated_at: new Date().toISOString(),
+        ...updates,
+      })
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error('Error updating subscription by user ID:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error updating subscription by user ID:', error);
     throw error;
   }
 }; 
