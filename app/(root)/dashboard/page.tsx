@@ -422,71 +422,71 @@ const DashboardPage = () => {
           </section>
         )}
 
-        {/* Sample Day in Role Experiences Section */}
-        <section className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <h2 className="text-3xl font-semibold text-foreground">
-                {userSubscription?.isFreePlan ? 'Example Day-in-Role Experiences' : 'Sample Experiences'}
-              </h2>
-              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Examples
-              </Badge>
-            </div>
-            {userSubscription?.isFreePlan && (
+        {/* Sample Day in Role Experiences Section (only for Free plan users) */}
+        {userSubscription?.isFreePlan && (
+          <section className="flex flex-col gap-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <h2 className="text-3xl font-semibold text-foreground">
+                  Example Day-in-Role Experiences
+                </h2>
+                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Examples
+                </Badge>
+              </div>
               <Button asChild>
                 <Link href="/subscription">
                   <Crown className="h-4 w-4 mr-2" />
                   Upgrade to Create Your Own
                 </Link>
               </Button>
-            )}
-          </div>
-          
-          <div className="flex flex-wrap gap-4 max-lg:flex-col w-full items-stretch">
-            {loadingSamples ? (
-              <div className="flex items-center justify-center w-full py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-2 text-muted-foreground">Loading examples...</span>
-              </div>
-            ) : sampleData.length > 0 ? (
-              sampleData.map((dayInRole) => (
-                <DayInRoleCard 
-                  key={dayInRole.id}
-                  dayInRoleId={dayInRole.id}
-                  companyName={dayInRole.companyName}
-                  companyLogo={dayInRole.companyLogo}
-                  position={dayInRole.position}
-                  description={dayInRole.description}
-                  challenges={dayInRole.challenges}
-                  createdAt={dayInRole.createdAt}
-                />
-              ))
-            ) : (
-              <div className="text-center py-12 w-full">
-                <div className="max-w-md mx-auto">
-                  <Image 
-                    src="/robot.png" 
-                    alt="No samples available" 
-                    width={120} 
-                    height={120} 
-                    className="mx-auto mb-6 opacity-50"
-                  />
-                  <h3 className="text-xl font-semibold text-foreground mb-2">
-                    No Sample Experiences Available
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    Sample experiences are currently being prepared. Please check back later.
-                  </p>
-                  <Button onClick={refreshData}>
-                    Refresh
-                  </Button>
+            </div>
+            
+            <div className="flex flex-wrap gap-4 max-lg:flex-col w-full items-stretch">
+              {loadingSamples ? (
+                <div className="flex items-center justify-center w-full py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-2 text-muted-foreground">Loading examples...</span>
                 </div>
-              </div>
-            )}
-          </div>
-        </section>
+              ) : sampleData.length > 0 ? (
+                sampleData.map((dayInRole) => (
+                  <DayInRoleCard 
+                    key={dayInRole.id}
+                    dayInRoleId={dayInRole.id}
+                    companyName={dayInRole.companyName}
+                    companyLogo={dayInRole.companyLogo}
+                    position={dayInRole.position}
+                    description={dayInRole.description}
+                    challenges={dayInRole.challenges}
+                    createdAt={dayInRole.createdAt}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12 w-full">
+                  <div className="max-w-md mx-auto">
+                    <Image 
+                      src="/robot.png" 
+                      alt="No samples available" 
+                      width={120} 
+                      height={120} 
+                      className="mx-auto mb-6 opacity-50"
+                    />
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      No Sample Experiences Available
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      Sample experiences are currently being prepared. Please check back later.
+                    </p>
+                    <Button onClick={refreshData}>
+                      Refresh
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

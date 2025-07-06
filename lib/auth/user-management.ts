@@ -215,4 +215,56 @@ export const initializeUser = async (clerkUser: any): Promise<{ user: DatabaseUs
     console.error('Error initializing user:', error);
     throw error;
   }
+};
+
+/**
+ * Deletes a user from the database along with all related data
+ */
+export const deleteUser = async (userId: string): Promise<void> => {
+  try {
+    const supabase = createServiceClient();
+    
+    // Delete user's subscriptions first (due to foreign key constraints)
+    const { error: subscriptionError } = await supabase
+      .from('subscriptions')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (subscriptionError) {
+      console.error('Error deleting user subscriptions:', subscriptionError);
+      // Continue with user deletion even if subscription deletion fails
+    } else {
+      console.log('User subscriptions deleted successfully:', userId);
+    }
+    
+    // Delete user's interviews (if they exist)
+    const { error: interviewError } = await supabase
+      .from('interviews')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (interviewError) {
+      console.error('Error deleting user interviews:', interviewError);
+      // Continue with user deletion even if interview deletion fails
+    } else {
+      console.log('User interviews deleted successfully:', userId);
+    }
+    
+    // Delete the user
+    const { error: userError } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', userId);
+    
+    if (userError) {
+      console.error('Error deleting user:', userError);
+      throw new Error(`Failed to delete user: ${userError.message}`);
+    }
+    
+    console.log('User deleted successfully:', userId);
+    
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
 }; 

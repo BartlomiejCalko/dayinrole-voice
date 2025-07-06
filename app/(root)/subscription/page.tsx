@@ -7,7 +7,8 @@ import { UsageTracker } from '@/components/subscription/UsageTracker';
 import { SubscriptionManagement } from '@/components/subscription/SubscriptionManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, Check, RefreshCw } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -16,6 +17,7 @@ const SubscriptionPageContent = () => {
   const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(false);
+  const [autoSyncing, setAutoSyncing] = useState(false);
 
   // Handle success/cancel from Stripe checkout
   useEffect(() => {
@@ -60,9 +62,47 @@ const SubscriptionPageContent = () => {
     }
   };
 
+  // Automatic background sync from Clerk - runs silently
+  const backgroundSyncFromClerk = async () => {
+    if (!user) return;
+
+    try {
+      setAutoSyncing(true);
+      console.log('Running automatic background sync from Clerk...');
+      
+      const response = await fetch('/api/subscription/sync-clerk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Background sync successful:', data.planId);
+        // Silently refresh subscription status
+        await fetchSubscription();
+      } else {
+        console.log('Background sync failed:', data.error);
+      }
+    } catch (error) {
+      console.error('Error in background sync:', error);
+    } finally {
+      setAutoSyncing(false);
+    }
+  };
+
   useEffect(() => {
     if (user && isLoaded) {
+      // First fetch current subscription
       fetchSubscription();
+      
+      // Then automatically sync from Clerk in background (silent)
+      // This ensures subscription is always up-to-date
+      setTimeout(() => {
+        backgroundSyncFromClerk();
+      }, 1000); // Small delay to avoid race conditions
     }
   }, [user, isLoaded]);
 
@@ -97,6 +137,14 @@ const SubscriptionPageContent = () => {
             ? 'Check your usage, manage your plan and get access to all Day in Role features.'
             : 'Choose the perfect plan to get detailed day-in-role insights for your next career move. Start today and unlock your career potential.'}
         </p>
+        
+        {/* Subtle auto-sync indicator */}
+        {autoSyncing && (
+          <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span>Updating subscription status...</span>
+          </div>
+        )}
         
         {/* Trust indicators */}
         <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground">
@@ -152,6 +200,8 @@ const SubscriptionPageContent = () => {
             subscription={subscription}
             onSubscriptionUpdate={fetchSubscription}
           />
+          
+
         </div>
       )}
 
@@ -169,7 +219,7 @@ const SubscriptionPageContent = () => {
           {!user && (
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-2xl mx-auto">
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                                 💡 <strong>Sign in required:</strong> You&apos;ll need to create an account to subscribe to a plan and start using Day in Role.
+                                💡 <strong>Sign in required:</strong> You&apos;ll need to create an account to subscribe to a plan and start using Day in Role.
               </p>
             </div>
           )}

@@ -28,7 +28,7 @@ const DayInRoleForm = ({ onSubmit, isLoading = false }: DayInRoleFormProps) => {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-semibold">Create Day in Role</CardTitle>
+        {/* <CardTitle className="text-2xl font-semibold">Create Day in Role</CardTitle> */}
         <CardDescription>
           
         </CardDescription>
@@ -45,7 +45,7 @@ const DayInRoleForm = ({ onSubmit, isLoading = false }: DayInRoleFormProps) => {
               ) : (
                 <>
                   <FileText className="w-4 h-4 text-gray-500" />
-                  Job Offer Text
+                  Job Offer Text or URL
                 </>
               )}
             </label>
@@ -53,7 +53,7 @@ const DayInRoleForm = ({ onSubmit, isLoading = false }: DayInRoleFormProps) => {
               id="jobOffer"
               placeholder={inputType === 'url' 
                 ? "Paste a job posting URL here (e.g., from LinkedIn, Indeed, Glassdoor)..." 
-                : "Paste the job offer text here..."
+                : "Paste the job offer text or URL here..."
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}

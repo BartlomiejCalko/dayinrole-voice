@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle, Calendar } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Calendar, BarChart3, Target, Zap } from 'lucide-react';
 
 interface UsageTrackerProps {
   userId: string;
@@ -25,14 +25,14 @@ export const UsageTracker = ({ userId }: UsageTrackerProps) => {
         const response = await fetch('/api/subscription/usage');
         
         if (!response.ok) {
-          throw new Error('Nie udało się pobrać informacji o wykorzystaniu');
+          throw new Error('Failed to fetch usage information');
         }
         
         const data = await response.json();
         setLimits(data.limits);
       } catch (error) {
         console.error('Error fetching usage limits:', error);
-        setError(error instanceof Error ? error.message : 'Wystąpił błąd');
+        setError(error instanceof Error ? error.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
@@ -43,22 +43,29 @@ export const UsageTracker = ({ userId }: UsageTrackerProps) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5" />
-            <span>Wykorzystanie subskrypcji</span>
+      <Card className="relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-y-12 translate-x-12" />
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center space-x-3">
+            <BarChart3 className="w-6 h-6 text-blue-600" />
+            <span className="text-2xl font-bold">Usage This Month</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-2 bg-gray-200 rounded"></div>
+          <div className="space-y-6">
+            <div className="animate-pulse space-y-3">
+              <div className="flex justify-between">
+                <div className="h-4 bg-gray-200 rounded w-32"></div>
+                <div className="h-4 bg-gray-200 rounded w-16"></div>
+              </div>
+              <div className="h-3 bg-gray-200 rounded"></div>
             </div>
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-2 bg-gray-200 rounded"></div>
+            <div className="animate-pulse space-y-3">
+              <div className="flex justify-between">
+                <div className="h-4 bg-gray-200 rounded w-24"></div>
+                <div className="h-4 bg-gray-200 rounded w-16"></div>
+              </div>
+              <div className="h-3 bg-gray-200 rounded"></div>
             </div>
           </div>
         </CardContent>
@@ -77,12 +84,21 @@ export const UsageTracker = ({ userId }: UsageTrackerProps) => {
 
   if (!limits || (limits.dayInRoleLimit === 0 && limits.interviewLimit === 0)) {
     return (
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Brak aktywnej subskrypcji. Wykup plan, aby rozpocząć korzystanie z Day in Role.
-        </AlertDescription>
-      </Alert>
+      <Card className="border-dashed">
+        <CardContent className="pt-6">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
+              <Target className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">No Usage Limits Available</h3>
+              <p className="text-muted-foreground">
+                Subscribe to a plan to start using Day in Role features.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -97,91 +113,148 @@ export const UsageTracker = ({ userId }: UsageTrackerProps) => {
 
   const getStatusBadge = (canGenerate: boolean, percent: number) => {
     if (!canGenerate) {
-      return <Badge variant="destructive">Limit wyczerpany</Badge>;
+      return (
+        <Badge variant="destructive" className="text-xs">
+          <AlertTriangle className="w-3 h-3 mr-1" />
+          Limit Reached
+        </Badge>
+      );
     }
     if (percent >= 80) {
-      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Blisko limitu</Badge>;
+      return (
+        <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/20 dark:text-yellow-300 dark:border-yellow-800 text-xs">
+          <AlertTriangle className="w-3 h-3 mr-1" />
+          Near Limit
+        </Badge>
+      );
     }
-    return <Badge variant="default" className="bg-green-100 text-green-800">Dostępne</Badge>;
+    return (
+      <Badge className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-300 dark:border-green-800 text-xs">
+        <CheckCircle className="w-3 h-3 mr-1" />
+        Available
+      </Badge>
+    );
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-y-16 translate-x-16" />
+      
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5" />
-            <span>Wykorzystanie w tym miesiącu</span>
+          <CardTitle className="flex items-center space-x-3">
+            <BarChart3 className="w-6 h-6 text-blue-600" />
+            <span className="text-2xl font-bold">Usage This Month</span>
           </CardTitle>
-          <Badge variant="outline" className="text-xs">
-            Odnawia się co miesiąc
+          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-300 dark:border-blue-800">
+            <Calendar className="w-3 h-3 mr-1" />
+            Resets Monthly
           </Badge>
         </div>
       </CardHeader>
       
       <CardContent className="space-y-6">
         {/* Day in Role Usage */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <span className="font-medium">Day in Role</span>
-              {getStatusBadge(limits.canGenerateDayInRole, dayInRolePercent)}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-lg flex items-center justify-center">
+                <Zap className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <span className="font-semibold text-lg">Day in Role Sessions</span>
+                <div className="flex items-center space-x-2 mt-1">
+                  {getStatusBadge(limits.canGenerateDayInRole, dayInRolePercent)}
+                </div>
+              </div>
             </div>
-            <span className="text-sm text-muted-foreground">
-              {limits.dayInRoleUsed}/{limits.dayInRoleLimit}
-            </span>
+            <div className="text-right">
+              <div className="text-2xl font-bold">
+                {limits.dayInRoleUsed}<span className="text-muted-foreground">/{limits.dayInRoleLimit}</span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {limits.dayInRoleLimit - limits.dayInRoleUsed} remaining
+              </div>
+            </div>
           </div>
           
           <div className="space-y-2">
             <Progress 
               value={dayInRolePercent} 
-              className="h-2"
+              className="h-3"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{Math.round(dayInRolePercent)}% wykorzystane</span>
-              <span>{limits.dayInRoleLimit - limits.dayInRoleUsed} pozostało</span>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{Math.round(dayInRolePercent)}% used</span>
+              <span className="font-medium">
+                {limits.dayInRoleLimit - limits.dayInRoleUsed > 0 
+                  ? `${limits.dayInRoleLimit - limits.dayInRoleUsed} sessions left` 
+                  : 'No sessions remaining'}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Interview Usage */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <span className="font-medium">Wywiady</span>
-              {getStatusBadge(limits.canGenerateInterview, interviewPercent)}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-lg flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <span className="font-semibold text-lg">Interviews</span>
+                <div className="flex items-center space-x-2 mt-1">
+                  {getStatusBadge(limits.canGenerateInterview, interviewPercent)}
+                </div>
+              </div>
             </div>
-            <span className="text-sm text-muted-foreground">
-              {limits.interviewsUsed}/{limits.interviewLimit}
-            </span>
+            <div className="text-right">
+              <div className="text-2xl font-bold">
+                {limits.interviewsUsed}<span className="text-muted-foreground">/{limits.interviewLimit}</span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {limits.interviewLimit - limits.interviewsUsed} remaining
+              </div>
+            </div>
           </div>
           
           <div className="space-y-2">
             <Progress 
               value={interviewPercent} 
-              className="h-2"
+              className="h-3"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{Math.round(interviewPercent)}% wykorzystane</span>
-              <span>{limits.interviewLimit - limits.interviewsUsed} pozostało</span>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{Math.round(interviewPercent)}% used</span>
+              <span className="font-medium">
+                {limits.interviewLimit - limits.interviewsUsed > 0 
+                  ? `${limits.interviewLimit - limits.interviewsUsed} interviews left` 
+                  : 'No interviews remaining'}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Additional Info */}
-        <div className="p-3 bg-muted/50 rounded-lg">
-          <div className="flex items-center space-x-2 text-sm">
-            <CheckCircle className="w-4 h-4 text-green-600" />
-            <span>Maksymalnie {limits.questionsPerInterview} pytań na wywiad</span>
+        <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
+            <div>
+              <div className="font-medium text-purple-800 dark:text-purple-200">
+                Interview Quality Limit
+              </div>
+              <div className="text-sm text-purple-700 dark:text-purple-300">
+                Up to {limits.questionsPerInterview} questions per interview session
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Warning when approaching limits */}
         {(dayInRolePercent >= 80 || interviewPercent >= 80) && (
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Zbliżasz się do limitu swojego planu. Rozważ przejście na wyższy plan, aby kontynuować bez ograniczeń.
+          <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              <strong>Approaching Limit:</strong> You're near your plan limits. Consider upgrading to continue without restrictions.
             </AlertDescription>
           </Alert>
         )}

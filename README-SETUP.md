@@ -8,10 +8,15 @@ When users sign up via Clerk (using Google or other providers), they are created
 
 ## The Solution
 
-This application implements a **dual-layer approach** to ensure users are always created in the database:
+This application implements a **multi-layer approach** to ensure users and subscriptions are always in sync:
 
-1. **Primary: Clerk Webhook** - Automatically creates users when they sign up
-2. **Fallback: Client-side Initialization** - Creates users when they first visit the app (if webhook failed)
+1. **Primary: Clerk Webhooks** - Automatically syncs users and subscriptions in real-time
+2. **Auto-sync: Background Sync** - Automatically syncs subscription status when users visit any page
+3. **Fallback: Client-side Initialization** - Creates users when they first visit the app (if webhook failed)
+
+### Automatic Subscription Sync
+
+The app automatically syncs subscription status from Clerk billing in the background. When users upgrade their plan in Clerk, the subscription status is automatically updated in your database within seconds - no manual action required!
 
 ## Setup Instructions
 
@@ -29,6 +34,10 @@ Your webhook endpoint is: `https://your-domain.com/api/clerk/webhook`
 6. Select the following events:
    - `user.created` (Essential)
    - `user.updated` (Recommended)
+   - `user.deleted` (Recommended)
+   - `subscription.created` (For billing sync)
+   - `subscription.updated` (For billing sync)
+   - `subscription.deleted` (For billing sync)
 7. Click **Create**
 
 #### Step 3: Configure Webhook Secret

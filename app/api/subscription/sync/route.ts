@@ -7,20 +7,19 @@ import { getUserSubscriptionStatus } from '@/lib/subscription';
 export async function POST(req: NextRequest) {
   try {
     const user = await verifyAuth();
-    console.log('Manual subscription sync requested by user:', user.uid);
     
     // Get current subscription from database
     const currentSubscription = await getSubscriptionByUserId(user.uid);
     
     if (!currentSubscription) {
-      return Response.json(
-        { error: 'No subscription found for user' },
-        { status: 404 }
-      );
+      return Response.json({ 
+        success: false, 
+        error: 'No subscription found in database' 
+      }, { status: 404 });
     }
 
-    // If the subscription has Stripe IDs, sync with Stripe
-    if (currentSubscription.stripe_subscription_id && currentSubscription.stripe_customer_id) {
+    // If subscription has Stripe IDs, sync with Stripe
+    if (currentSubscription.stripe_subscription_id) {
       console.log('Syncing subscription with Stripe:', currentSubscription.stripe_subscription_id);
       
       try {
@@ -65,90 +64,36 @@ export async function POST(req: NextRequest) {
         await updateSubscriptionByUserId(user.uid, updateData);
         console.log('Subscription synced successfully with Stripe data');
         
-        // Get updated subscription status
-        const updatedStatus = await getUserSubscriptionStatus(user.uid);
-        
-        return Response.json({
-          success: true,
-          message: 'Subscription synced successfully with Stripe',
-          data: {
-            subscription: updatedStatus.subscription,
-            isFreePlan: updatedStatus.isFreePlan,
-            planId: updatedStatus.planId,
-            limits: updatedStatus.limits,
-            syncedFromStripe: true
+        return Response.json({ 
+          success: true, 
+          message: 'Subscription synced with Stripe successfully',
+          subscription: {
+            ...currentSubscription,
+            ...updateData
           }
         });
         
       } catch (stripeError: any) {
         console.error('Error syncing with Stripe:', stripeError);
-        
-        // If subscription not found in Stripe, might need to handle differently
-        if (stripeError.code === 'resource_missing') {
-          console.log('Subscription not found in Stripe, may have been deleted');
-          
-          // Update to canceled status
-          await updateSubscriptionByUserId(user.uid, {
-            status: 'canceled',
-            cancel_at_period_end: true
-          });
-          
-          return Response.json({
-            success: true,
-            message: 'Subscription was not found in Stripe and has been marked as canceled',
-            data: {
-              subscription: null,
-              isFreePlan: true,
-              planId: 'free',
-              limits: {
-                dayInRoleLimit: 0,
-                dayInRoleUsed: 0,
-                interviewLimit: 0,
-                interviewsUsed: 0,
-                questionsPerInterview: 3,
-                canGenerateDayInRole: false,
-                canGenerateInterview: false
-              },
-              syncedFromStripe: false
-            }
-          });
-        }
-        
-        throw stripeError;
+        return Response.json({ 
+          success: false, 
+          error: `Failed to sync with Stripe: ${stripeError.message}` 
+        }, { status: 500 });
       }
     } else {
-      // No Stripe IDs, this is likely a free subscription
-      console.log('No Stripe IDs found, this appears to be a free subscription');
-      
-      // Get current subscription status
-      const currentStatus = await getUserSubscriptionStatus(user.uid);
-      
-      return Response.json({
-        success: true,
-        message: 'Current subscription status retrieved (no Stripe sync needed)',
-        data: {
-          subscription: currentStatus.subscription,
-          isFreePlan: currentStatus.isFreePlan,
-          planId: currentStatus.planId,
-          limits: currentStatus.limits,
-          syncedFromStripe: false
-        }
-      });
+      // No Stripe subscription ID - this is likely a free plan or manual subscription
+      console.log('No Stripe subscription ID found for user:', user.uid);
+      return Response.json({ 
+        success: false, 
+        error: 'No Stripe subscription ID found. This subscription cannot be synced with Stripe.' 
+      }, { status: 400 });
     }
     
   } catch (error) {
     console.error('Error syncing subscription:', error);
-    
-    if (error instanceof Error && error.message.includes('authentication')) {
-      return Response.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-    
-    return Response.json(
-      { error: 'Failed to sync subscription' },
-      { status: 500 }
-    );
+    return Response.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 });
   }
 } 
