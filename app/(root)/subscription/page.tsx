@@ -19,13 +19,12 @@ const SubscriptionPageContent = () => {
   const [loading, setLoading] = useState(false);
   const [autoSyncing, setAutoSyncing] = useState(false);
 
-  // Handle success/cancel from Stripe checkout
+  // Handle success/cancel from Clerk billing
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
-    const sessionId = searchParams.get('session_id');
 
-    if (success === 'true' && sessionId) {
+    if (success === 'true') {
       toast.success('Subscription activated successfully!');
       // Clear URL parameters
       window.history.replaceState({}, '', '/subscription');
@@ -201,6 +200,23 @@ const SubscriptionPageContent = () => {
             onSubscriptionUpdate={fetchSubscription}
           />
           
+          {/* Clean subscription info section */}
+          {subscription?.plan_id === 'free' && (
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h3 className="font-semibold mb-2 text-blue-800 dark:text-blue-200">💡 Ready to Get Started?</h3>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                You're currently on the free plan. Choose a plan below to start creating your own Day-in-Role experiences.
+              </p>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={fetchSubscription}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Refresh Status
+              </Button>
+            </div>
+          )}
 
         </div>
       )}

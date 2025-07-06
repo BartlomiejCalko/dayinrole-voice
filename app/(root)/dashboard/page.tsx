@@ -166,70 +166,6 @@ const DashboardPage = () => {
     }
   };
 
-  // Manual subscription refresh (useful for testing and edge cases)
-  const refreshSubscription = async () => {
-    if (!user) return;
-    
-    try {
-      const response = await fetch('/api/subscription/refresh', {
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUserSubscription({
-            isFreePlan: data.isFreePlan,
-            planId: data.planId,
-            limits: data.limits
-          });
-          toast.success('Subscription status refreshed successfully!');
-        }
-      }
-    } catch (error) {
-      console.error('Error refreshing subscription:', error);
-      toast.error('Failed to refresh subscription status');
-    }
-  };
-
-  // Manual subscription sync with Stripe (fixes webhook issues)
-  const syncSubscription = async () => {
-    if (!user) return;
-    
-    try {
-      toast.loading('Syncing subscription with Stripe...');
-      
-      const response = await fetch('/api/subscription/sync', {
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUserSubscription({
-            isFreePlan: data.data.isFreePlan,
-            planId: data.data.planId,
-            limits: data.data.limits
-          });
-          
-          if (data.data.syncedFromStripe) {
-            toast.success('Subscription synced successfully with Stripe!');
-          } else {
-            toast.success('Subscription status updated!');
-          }
-        } else {
-          toast.error('Failed to sync subscription');
-        }
-      } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to sync subscription');
-      }
-    } catch (error) {
-      console.error('Error syncing subscription:', error);
-      toast.error('Failed to sync subscription with Stripe');
-    }
-  };
-
   const handleCreateClick = () => {
     if (userSubscription?.isFreePlan) {
       toast.error('Free plan users can only view examples. Please upgrade to create your own Day-in-Role experiences.');
@@ -269,32 +205,22 @@ const DashboardPage = () => {
       </div>
 
       <div className="relative z-10 space-y-8">
-        {/* Free Plan Alert */}
+        {/* Free Plan Upgrade Section */}
         {userSubscription?.isFreePlan && (
-          <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-r from-purple-500/10 to-blue-500/10">
-            <CardHeader className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Crown className="h-6 w-6 text-yellow-500" />
-                <CardTitle className="text-2xl">You&apos;re on the Free Plan</CardTitle>
-              </div>
-              <CardDescription className="text-lg">
-                You can explore example Day-in-Role experiences below. To create your own personalized experiences, upgrade to a paid plan.
+          <Card className="border-2 border-dashed border-muted-foreground/25 bg-muted/10">
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl font-bold text-foreground">
+                🚀 Ready to Create Your Own Experiences?
+              </CardTitle>
+              <CardDescription className="text-base text-muted-foreground max-w-2xl mx-auto">
+                You're currently on the free plan. Upgrade to start creating personalized Day-in-Role experiences and unlock all features.
               </CardDescription>
-              <div className="flex gap-3 justify-center mt-4">
-                <Button asChild className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+              <div className="flex justify-center mt-4">
+                <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
                   <Link href="/subscription">
                     <Sparkles className="h-4 w-4 mr-2" />
                     Upgrade Now
                   </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/subscription">View Plans</Link>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={refreshSubscription} className="text-xs">
-                  Refresh Status
-                </Button>
-                <Button variant="ghost" size="sm" onClick={syncSubscription} className="text-xs">
-                  Fix Subscription
                 </Button>
               </div>
             </CardHeader>

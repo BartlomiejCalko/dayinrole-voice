@@ -3,7 +3,6 @@ import { headers } from 'next/headers';
 import { Webhook } from 'svix';
 import { createServiceClient } from '@/utils/supabase/server';
 import { upsertUser, deleteUser } from '@/lib/auth/user-management';
-import { updateSubscriptionByUserId } from '@/lib/subscription/queries';
 
 export async function POST(req: NextRequest) {
   // Get the headers
@@ -50,9 +49,9 @@ export async function POST(req: NextRequest) {
     const { id, email_addresses, first_name, last_name } = evt.data;
     
     try {
-      const supabase = createServiceClient();
+      console.log('Creating user in database via webhook:', { id, email: email_addresses?.[0]?.email_address });
       
-      // Create user in database using upsert to handle race conditions
+      // Create user in database
       const userData = {
         id: id,
         first_name: first_name || null,
@@ -63,12 +62,11 @@ export async function POST(req: NextRequest) {
           : first_name || last_name || null,
       };
       
-      console.log('Creating user in database via webhook:', { id, email: userData.email });
-      
       const user = await upsertUser(userData);
-      console.log('User upserted successfully via webhook:', user.id);
+      console.log('User created successfully via webhook:', user.id);
       
-      // Create default free subscription for new user using upsert
+      // Create default free subscription
+      const supabase = createServiceClient();
       const freeSubscription = {
         user_id: id,
         plan_id: 'free',
@@ -76,7 +74,7 @@ export async function POST(req: NextRequest) {
         stripe_subscription_id: null,
         status: 'active' as const,
         current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
+        current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year
         cancel_at_period_end: false,
       };
       
@@ -89,22 +87,23 @@ export async function POST(req: NextRequest) {
       
       if (subError) {
         console.error('Error creating free subscription:', subError);
-        // Don't fail the webhook if subscription creation fails
       } else {
-        console.log('Free subscription upserted for user:', id);
+        console.log('Free subscription created for user:', id);
       }
       
     } catch (error) {
       console.error('Error processing user creation webhook:', error);
       return new Response('Error processing webhook', { status: 500 });
     }
-  } else if (eventType === 'user.updated') {
+  } 
+  
+  else if (eventType === 'user.updated') {
     const { id, email_addresses, first_name, last_name } = evt.data;
     
     try {
-      const supabase = createServiceClient();
+      console.log('Updating user in database:', { id, email: email_addresses?.[0]?.email_address });
       
-      // Update user in database
+      const supabase = createServiceClient();
       const updatedUser = {
         first_name: first_name || null,
         last_name: last_name || null,
@@ -114,8 +113,6 @@ export async function POST(req: NextRequest) {
           : first_name || last_name || null,
         updated_at: new Date().toISOString(),
       };
-      
-      console.log('Updating user in database:', { id, email: updatedUser.email });
       
       const { data, error } = await supabase
         .from('users')
@@ -135,111 +132,107 @@ export async function POST(req: NextRequest) {
       console.error('Error processing user update webhook:', error);
       return new Response('Error processing webhook', { status: 500 });
     }
-  } else if (eventType === 'user.deleted') {
+  } 
+  
+  else if (eventType === 'user.deleted') {
     const { id } = evt.data;
     
     try {
       console.log('Deleting user from database via webhook:', id);
-      
       await deleteUser(id);
       console.log('User deleted successfully via webhook:', id);
-      
     } catch (error) {
       console.error('Error processing user deletion webhook:', error);
       return new Response('Error processing webhook', { status: 500 });
     }
-  } else if (eventType === 'subscription.created') {
-    // Handle Clerk subscription created
+  }
+
+  else if (eventType === 'subscription.created' || eventType === 'subscription.updated') {
     const { subscription, user_id } = evt.data;
     
     try {
-      console.log('Processing Clerk subscription created:', { subscription, user_id });
+      console.log('Processing subscription event:', eventType, 'for user:', user_id);
       
       const supabase = createServiceClient();
       
-      // Map Clerk subscription to your app's plan
+      // First, ensure user exists in database (in case webhook order is wrong)
+      const { data: existingUser, error: userFetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user_id)
+        .single();
+      
+      if (userFetchError || !existingUser) {
+        console.log('User not found, fetching from Clerk to create:', user_id);
+        
+        try {
+          const clerkResponse = await fetch(`https://api.clerk.com/v1/users/${user_id}`, {
+            headers: {
+              'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+            },
+          });
+          
+          if (clerkResponse.ok) {
+            const clerkUser = await clerkResponse.json();
+            const userData = {
+              id: clerkUser.id,
+              first_name: clerkUser.first_name || null,
+              last_name: clerkUser.last_name || null,
+              email: clerkUser.email_addresses?.[0]?.email_address || '',
+              display_name: clerkUser.first_name && clerkUser.last_name 
+                ? `${clerkUser.first_name} ${clerkUser.last_name}`.trim()
+                : clerkUser.first_name || clerkUser.last_name || null,
+            };
+            
+            await upsertUser(userData);
+            console.log('User created for subscription event:', user_id);
+          }
+        } catch (clerkError) {
+          console.error('Error creating user from Clerk:', clerkError);
+        }
+      }
+      
+      // Map subscription plan
       let planId = 'free';
       if (subscription.subscription_plan_id) {
-        // Map Clerk plan IDs to your app's plan IDs
-        if (subscription.subscription_plan_id.includes('pro')) {
+        const planName = subscription.subscription_plan_id.toLowerCase();
+        if (planName.includes('pro')) {
           planId = 'pro';
-        } else if (subscription.subscription_plan_id.includes('start')) {
+        } else if (planName.includes('start')) {
           planId = 'start';
         }
       }
       
-      // Update user's subscription in database
-      const updateData = {
+      console.log('Updating subscription to plan:', planId);
+      
+      // Update subscription in database
+      const subscriptionData = {
+        user_id: user_id,
         plan_id: planId,
-        status: 'active' as const,
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-        cancel_at_period_end: false,
-      };
-      
-      await updateSubscriptionByUserId(user_id, updateData);
-      console.log('Clerk subscription created, database updated:', { user_id, planId });
-      
-    } catch (error) {
-      console.error('Error processing Clerk subscription created:', error);
-      return new Response('Error processing webhook', { status: 500 });
-    }
-  } else if (eventType === 'subscription.updated') {
-    // Handle Clerk subscription updated
-    const { subscription, user_id } = evt.data;
-    
-    try {
-      console.log('Processing Clerk subscription updated:', { subscription, user_id });
-      
-      const supabase = createServiceClient();
-      
-      // Map Clerk subscription to your app's plan
-      let planId = 'free';
-      if (subscription.subscription_plan_id) {
-        if (subscription.subscription_plan_id.includes('pro')) {
-          planId = 'pro';
-        } else if (subscription.subscription_plan_id.includes('start')) {
-          planId = 'start';
-        }
-      }
-      
-      // Update user's subscription in database
-      const updateData = {
-        plan_id: planId,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
         status: subscription.status === 'active' ? 'active' as const : 'canceled' as const,
         current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         cancel_at_period_end: subscription.cancel_at_period_end || false,
       };
       
-      await updateSubscriptionByUserId(user_id, updateData);
-      console.log('Clerk subscription updated, database updated:', { user_id, planId });
+      const { error: subError } = await supabase
+        .from('subscriptions')
+        .upsert(subscriptionData, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        });
+      
+      if (subError) {
+        console.error('Error updating subscription:', subError);
+        return new Response('Error updating subscription', { status: 500 });
+      }
+      
+      console.log('Subscription updated successfully:', { user_id, planId });
       
     } catch (error) {
-      console.error('Error processing Clerk subscription updated:', error);
-      return new Response('Error processing webhook', { status: 500 });
-    }
-  } else if (eventType === 'subscription.deleted') {
-    // Handle Clerk subscription deleted
-    const { user_id } = evt.data;
-    
-    try {
-      console.log('Processing Clerk subscription deleted:', { user_id });
-      
-      const supabase = createServiceClient();
-      
-      // Update user's subscription back to free
-      const updateData = {
-        plan_id: 'free',
-        status: 'canceled' as const,
-        cancel_at_period_end: true,
-      };
-      
-      await updateSubscriptionByUserId(user_id, updateData);
-      console.log('Clerk subscription deleted, database updated to free:', { user_id });
-      
-    } catch (error) {
-      console.error('Error processing Clerk subscription deleted:', error);
+      console.error('Error processing subscription webhook:', error);
       return new Response('Error processing webhook', { status: 500 });
     }
   }

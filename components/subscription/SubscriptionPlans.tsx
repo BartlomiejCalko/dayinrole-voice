@@ -1,74 +1,40 @@
 "use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { SUBSCRIPTION_PLANS } from '@/constants/subscription-plans';
-import { getStripe } from '@/lib/stripe/client';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { CheckCircle } from 'lucide-react';
+import { SUBSCRIPTION_PLANS, getPlanById } from '@/constants/subscription-plans';
+import Link from 'next/link';
 
 interface SubscriptionPlansProps {
   currentPlanId?: string;
+  showActions?: boolean;
 }
 
-export const SubscriptionPlans = ({ currentPlanId }: SubscriptionPlansProps) => {
-  const [loading, setLoading] = useState<string | null>(null);
-
-  const handleSubscribe = async (priceId: string, planId: string) => {
-    setLoading(planId);
-    
-    try {
-      const response = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, planId }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create payment session');
-      }
-      
-      const { sessionId } = await response.json();
-      const stripe = await getStripe();
-      
-      if (!stripe) {
-        throw new Error('Failed to load Stripe');
-      }
-      
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (error) {
-        throw new Error(error.message || 'Payment redirect error');
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast.error(error instanceof Error ? error.message : 'An error occurred while creating payment session');
-    } finally {
-      setLoading(null);
-    }
-  };
+export const SubscriptionPlans = ({ currentPlanId, showActions = true }: SubscriptionPlansProps) => {
+  const currentPlan = currentPlanId ? getPlanById(currentPlanId) : null;
 
   return (
     <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-      {SUBSCRIPTION_PLANS.map((plan) => {
+      {SUBSCRIPTION_PLANS.filter(plan => plan.id !== 'free').map((plan) => {
         const isCurrentPlan = currentPlanId === plan.id;
-        const isBasic = plan.id === 'basic';
+        const isPro = plan.id === 'pro';
         
         return (
           <Card key={plan.id} className={`relative transition-all hover:shadow-lg ${
             isCurrentPlan ? 'ring-2 ring-primary shadow-lg' : ''
-          } ${!isBasic ? 'border-primary' : ''}`}>
+          } ${isPro ? 'border-primary' : ''}`}>
             {isCurrentPlan && (
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <Badge className="bg-primary text-primary-foreground px-3 py-1">
+                  <CheckCircle className="w-3 h-3 mr-1" />
                   Current plan
                 </Badge>
               </div>
             )}
             
-            {!isBasic && (
+            {isPro && (
               <div className="absolute -top-3 right-4">
                 <Badge variant="secondary" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
                   Popular
@@ -108,21 +74,31 @@ export const SubscriptionPlans = ({ currentPlanId }: SubscriptionPlansProps) => 
                 </li>
               </ul>
               
-              <Button
-                onClick={() => handleSubscribe(plan.stripePriceId, plan.id)}
-                disabled={loading === plan.id || isCurrentPlan}
-                className={`w-full h-12 text-lg ${
-                  !isBasic ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' : ''
-                }`}
-                variant={isBasic ? 'outline' : 'default'}
-              >
-                {loading === plan.id ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                    <span>Loading...</span>
-                  </div>
-                ) : isCurrentPlan ? 'Current plan' : 'Choose plan'}
-              </Button>
+              {showActions && (
+                <div className="pt-4">
+                  {isCurrentPlan ? (
+                    <Button
+                      disabled
+                      className="w-full h-12 text-lg"
+                      variant="outline"
+                    >
+                      Current Plan
+                    </Button>
+                  ) : (
+                    <Button
+                      asChild
+                      className={`w-full h-12 text-lg ${
+                        isPro ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' : ''
+                      }`}
+                      variant={isPro ? 'default' : 'outline'}
+                    >
+                      <Link href="/subscription">
+                        Choose {plan.name}
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         );

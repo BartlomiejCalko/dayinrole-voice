@@ -1,23 +1,32 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
 
 export const useUserInitialization = () => {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const initializationAttempted = useRef(false);
+  const { isLoaded, isSignedIn, user } = useAuth();
   const subscriptionSyncAttempted = useRef(false);
-  
+
   useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user) {
+      return;
+    }
+
     const initializeUser = async () => {
-      if (!isLoaded || !isSignedIn || !user || initializationAttempted.current) {
-        return;
-      }
-      
       try {
-        initializationAttempted.current = true;
+        console.log('Checking if user exists in database:', user.id);
         
-        console.log('Initializing user in database:', user.id);
+        // Check if user exists first
+        const statusResponse = await fetch('/api/auth/check-user-status');
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          if (statusData.data?.status?.existsInDatabase) {
+            console.log('User already exists in database');
+            return;
+          }
+        }
+        
+        console.log('User not found, initializing in database:', user.id);
         
         const response = await fetch('/api/auth/initialize-user', {
           method: 'POST',
@@ -29,7 +38,27 @@ export const useUserInitialization = () => {
         const result = await response.json();
         
         if (result.success) {
-          console.log('User initialized successfully:', result.data.user.id);
+          console.log('User initialized successfully:', result.data);
+          
+          // Also sync subscription from Clerk metadata as backup
+          setTimeout(async () => {
+            try {
+              console.log('Syncing subscription from Clerk as backup');
+              const syncResponse = await fetch('/api/subscription/manual-sync', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
+              const syncResult = await syncResponse.json();
+              if (syncResult.success) {
+                console.log('Subscription synced from Clerk metadata');
+              }
+            } catch (error) {
+              console.log('Subscription sync failed (this is normal if webhook worked):', error);
+            }
+          }, 2000);
+          
         } else {
           console.error('Failed to initialize user:', result.error);
         }
@@ -37,43 +66,9 @@ export const useUserInitialization = () => {
         console.error('Error during user initialization:', error);
       }
     };
-
-    const syncSubscriptionFromClerk = async () => {
-      if (!isLoaded || !isSignedIn || !user || subscriptionSyncAttempted.current) {
-        return;
-      }
-      
-      try {
-        subscriptionSyncAttempted.current = true;
-        
-        console.log('Auto-syncing subscription from Clerk for user:', user.id);
-        
-        const response = await fetch('/api/subscription/sync-clerk', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log('Subscription auto-synced successfully:', result.planId);
-        } else {
-          console.log('Subscription auto-sync failed:', result.error);
-        }
-      } catch (error) {
-        console.error('Error during subscription auto-sync:', error);
-      }
-    };
     
-    // Initialize user first
+    // Initialize user with subscription sync as backup
     initializeUser();
-    
-    // Then sync subscription after a short delay
-    setTimeout(() => {
-      syncSubscriptionFromClerk();
-    }, 2000);
     
   }, [isLoaded, isSignedIn, user]);
   
