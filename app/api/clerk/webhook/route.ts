@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
 
   // If there are no headers, error out
   if (!svix_id || !svix_timestamp || !svix_signature) {
+    console.error('Missing svix headers');
     return new Response('Error occured -- no svix headers', {
       status: 400
     })
@@ -43,12 +44,15 @@ export async function POST(req: NextRequest) {
 
   // Handle the webhook
   const eventType = evt.type;
-  console.log('Clerk webhook event:', eventType, 'for user:', evt.data?.id);
+  const eventData = evt.data;
+  
+  console.log('Clerk webhook event:', eventType, 'for user:', eventData?.id);
+  console.log('Full webhook payload:', JSON.stringify(evt, null, 2));
 
-  if (eventType === 'user.created') {
-    const { id, email_addresses, first_name, last_name } = evt.data;
-    
-    try {
+  try {
+    if (eventType === 'user.created') {
+      const { id, email_addresses, first_name, last_name } = eventData;
+      
       console.log('Creating user in database via webhook:', { id, email: email_addresses?.[0]?.email_address });
       
       // Create user in database
@@ -91,71 +95,40 @@ export async function POST(req: NextRequest) {
         console.log('Free subscription created for user:', id);
       }
       
-    } catch (error) {
-      console.error('Error processing user creation webhook:', error);
-      return new Response('Error processing webhook', { status: 500 });
-    }
-  } 
-  
-  else if (eventType === 'user.updated') {
-    const { id, email_addresses, first_name, last_name } = evt.data;
-    
-    try {
-      console.log('Updating user in database:', { id, email: email_addresses?.[0]?.email_address });
+    } else if (eventType === 'user.deleted') {
+      const { id } = eventData;
       
-      const supabase = createServiceClient();
-      const updatedUser = {
-        first_name: first_name || null,
-        last_name: last_name || null,
-        email: email_addresses?.[0]?.email_address || '',
-        display_name: first_name && last_name 
-          ? `${first_name} ${last_name}`.trim()
-          : first_name || last_name || null,
-        updated_at: new Date().toISOString(),
-      };
-      
-      const { data, error } = await supabase
-        .from('users')
-        .update(updatedUser)
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error updating user in database:', error);
-        return new Response('Error updating user', { status: 500 });
-      }
-      
-      console.log('User updated successfully via webhook:', data.id);
-      
-    } catch (error) {
-      console.error('Error processing user update webhook:', error);
-      return new Response('Error processing webhook', { status: 500 });
-    }
-  } 
-  
-  else if (eventType === 'user.deleted') {
-    const { id } = evt.data;
-    
-    try {
       console.log('Deleting user from database via webhook:', id);
       await deleteUser(id);
       console.log('User deleted successfully via webhook:', id);
-    } catch (error) {
-      console.error('Error processing user deletion webhook:', error);
-      return new Response('Error processing webhook', { status: 500 });
-    }
-  }
-
-  else if (eventType === 'subscription.created' || eventType === 'subscription.updated') {
-    const { subscription, user_id } = evt.data;
-    
-    try {
-      console.log('Processing subscription event:', eventType, 'for user:', user_id);
+      
+    } else if (eventType === 'subscription.created' || eventType === 'subscription.updated' || eventType === 'subscription.active') {
+      console.log('Processing subscription event:', eventType);
+      console.log('Event data keys:', Object.keys(eventData));
+      
+      // Extract user_id - it might be in different places depending on the event
+      let user_id = eventData.user_id || eventData.id;
+      
+      // For subscription events, the user_id might be nested or in metadata
+      if (!user_id && eventData.metadata) {
+        user_id = eventData.metadata.user_id;
+      }
+      
+      // If still no user_id, check if this is a user object with subscription data
+      if (!user_id && eventData.public_metadata) {
+        user_id = eventData.id; // This might be a user object with subscription metadata
+      }
+      
+      if (!user_id) {
+        console.error('No user_id found in subscription event:', eventData);
+        return new Response('No user_id found', { status: 400 });
+      }
+      
+      console.log('Processing subscription for user:', user_id);
       
       const supabase = createServiceClient();
       
-      // First, ensure user exists in database (in case webhook order is wrong)
+      // First, ensure user exists in database
       const { data: existingUser, error: userFetchError } = await supabase
         .from('users')
         .select('*')
@@ -192,18 +165,62 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Map subscription plan
-      let planId = 'free';
-      if (subscription.subscription_plan_id) {
-        const planName = subscription.subscription_plan_id.toLowerCase();
-        if (planName.includes('pro')) {
-          planId = 'pro';
-        } else if (planName.includes('start')) {
-          planId = 'start';
+      // Determine plan from event data
+      let planId = 'free'; // Default to free
+      
+      // Check various places where plan information might be stored
+      const planSources = [
+        eventData.plan_id,
+        eventData.subscription_plan_id,
+        eventData.public_metadata?.planId,
+        eventData.public_metadata?.plan_id,
+        eventData.public_metadata?.subscriptionPlan,
+        eventData.private_metadata?.planId,
+        eventData.private_metadata?.plan_id,
+        eventData.private_metadata?.subscriptionPlan,
+        eventData.metadata?.planId,
+        eventData.metadata?.plan_id,
+        eventData.metadata?.subscriptionPlan,
+      ];
+      
+      // Find the first non-null plan source
+      for (const source of planSources) {
+        if (source && typeof source === 'string') {
+          const planName = source.toLowerCase();
+          if (planName.includes('start') || planName === 'start') {
+            planId = 'start';
+            break;
+          } else if (planName.includes('pro') || planName === 'pro') {
+            planId = 'pro';
+            break;
+          } else if (planName !== 'free') {
+            // If it's not 'free' and doesn't match start/pro, assume it's a valid plan ID
+            planId = planName;
+            break;
+          }
         }
       }
       
-      console.log('Updating subscription to plan:', planId);
+      // For subscription.active events, assume it's not free (since free plans don't typically have active subscriptions)
+      if (eventType === 'subscription.active' && planId === 'free') {
+        // Default to 'start' if we can't determine the plan but it's an active subscription
+        planId = 'start';
+      }
+      
+      console.log('Determined plan ID:', planId, 'from event type:', eventType);
+      
+      // Determine subscription status
+      let status: 'active' | 'canceled' | 'past_due' = 'active';
+      if (eventData.status) {
+        const eventStatus = eventData.status.toLowerCase();
+        if (eventStatus === 'canceled' || eventStatus === 'cancelled') {
+          status = 'canceled';
+        } else if (eventStatus === 'past_due') {
+          status = 'past_due';
+        } else {
+          status = 'active';
+        }
+      }
       
       // Update subscription in database
       const subscriptionData = {
@@ -211,11 +228,13 @@ export async function POST(req: NextRequest) {
         plan_id: planId,
         stripe_customer_id: null,
         stripe_subscription_id: null,
-        status: subscription.status === 'active' ? 'active' as const : 'canceled' as const,
+        status: status,
         current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end || false,
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        cancel_at_period_end: eventData.cancel_at_period_end || false,
       };
+      
+      console.log('Upserting subscription data:', subscriptionData);
       
       const { error: subError } = await supabase
         .from('subscriptions')
@@ -229,13 +248,16 @@ export async function POST(req: NextRequest) {
         return new Response('Error updating subscription', { status: 500 });
       }
       
-      console.log('Subscription updated successfully:', { user_id, planId });
+      console.log('Subscription updated successfully:', { user_id, planId, status });
       
-    } catch (error) {
-      console.error('Error processing subscription webhook:', error);
-      return new Response('Error processing webhook', { status: 500 });
+    } else {
+      console.log('Unhandled webhook event type:', eventType);
     }
+    
+    return new Response('Webhook processed successfully', { status: 200 });
+    
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    return new Response('Error processing webhook', { status: 500 });
   }
-
-  return new Response('', { status: 200 });
 } 
