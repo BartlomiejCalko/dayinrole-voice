@@ -194,6 +194,121 @@ export async function POST(req: NextRequest) {
       await deleteUser(id);
       console.log('User deleted successfully via webhook:', id);
       
+    } else if (eventType === 'user.updated') {
+      console.log('Processing user.updated event - checking for subscription changes');
+      const { id } = eventData;
+      
+      if (!id) {
+        console.error('No user ID found in user.updated event');
+        return new Response('No user ID found', { status: 400 });
+      }
+      
+      // For user.updated events, the eventData IS the user data
+      const planId = extractPlanFromUser(eventData);
+      const subscriptionStatus = extractStatusFromUser(eventData);
+      
+      console.log('Plan detected from user.updated event:', planId, 'Status:', subscriptionStatus);
+      
+      // Only proceed if this looks like a subscription change (not a free plan)
+      if (planId !== 'free') {
+        const supabase = createServiceClient();
+        
+        // Update subscription in database
+        const subscriptionData = {
+          user_id: id,
+          plan_id: planId,
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          status: subscriptionStatus as 'active' | 'canceled' | 'past_due',
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+          cancel_at_period_end: false,
+        };
+        
+        console.log('Upserting subscription from user.updated:', subscriptionData);
+        
+        const { error: subError } = await supabase
+          .from('subscriptions')
+          .upsert(subscriptionData, {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          });
+        
+        if (subError) {
+          console.error('Error updating subscription from user.updated:', subError);
+        } else {
+          console.log('Subscription updated successfully from user.updated:', { user_id: id, planId, status: subscriptionStatus });
+        }
+      } else {
+        console.log('User.updated event shows free plan, skipping subscription update');
+      }
+      
+    } else if (eventType.startsWith('subscriptionItem.')) {
+      console.log('Processing subscriptionItem event:', eventType);
+      console.log('Event data keys:', Object.keys(eventData));
+      
+      // For subscriptionItem events, we need to find the user_id
+      let user_id = eventData.user_id || eventData.customer_id;
+      
+      if (!user_id && eventData.subscription) {
+        user_id = eventData.subscription.user_id || eventData.subscription.customer_id;
+      }
+      
+      if (!user_id) {
+        console.error('No user_id found in subscriptionItem event:', eventData);
+        return new Response('No user_id found', { status: 400 });
+      }
+      
+      console.log('Processing subscriptionItem for user:', user_id);
+      
+      // Fetch full user data from Clerk to get subscription info
+      const clerkUser = await fetchClerkUser(user_id, 5000);
+      
+      if (clerkUser) {
+        const planId = extractPlanFromUser(clerkUser);
+        const subscriptionStatus = extractStatusFromUser(clerkUser);
+        
+        // Map subscriptionItem events to our status
+        let finalStatus = subscriptionStatus;
+        if (eventType === 'subscriptionItem.canceled' || eventType === 'subscriptionItem.ended') {
+          finalStatus = 'canceled';
+        } else if (eventType === 'subscriptionItem.active') {
+          finalStatus = 'active';
+        }
+        
+        console.log('Plan from subscriptionItem event:', planId, 'Status:', finalStatus);
+        
+        const supabase = createServiceClient();
+        
+        const subscriptionData = {
+          user_id: user_id,
+          plan_id: planId,
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          status: finalStatus as 'active' | 'canceled' | 'past_due',
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          cancel_at_period_end: eventType === 'subscriptionItem.canceled',
+        };
+        
+        console.log('Upserting subscription from subscriptionItem:', subscriptionData);
+        
+        const { error: subError } = await supabase
+          .from('subscriptions')
+          .upsert(subscriptionData, {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          });
+        
+        if (subError) {
+          console.error('Error updating subscription from subscriptionItem:', subError);
+        } else {
+          console.log('Subscription updated successfully from subscriptionItem:', { user_id, planId, status: finalStatus });
+        }
+      } else {
+        console.error('Failed to fetch user data for subscriptionItem event:', user_id);
+      }
+      
     } else if (eventType === 'subscription.created' || eventType === 'subscription.updated' || eventType === 'subscription.active') {
       console.log('Processing subscription event:', eventType);
       console.log('Event data keys:', Object.keys(eventData));

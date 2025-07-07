@@ -73,9 +73,22 @@ export async function POST(req: NextRequest) {
       eventType,
       hasUserId: !!eventData?.user_id,
       hasId: !!eventData?.id,
+      hasCustomerId: !!eventData?.customer_id,
       hasMetadata: !!eventData?.metadata,
       hasPublicMetadata: !!eventData?.public_metadata,
       hasPrivateMetadata: !!eventData?.private_metadata,
+      hasSubscriptionField: !!eventData?.subscription,
+      fullEventData: eventData
+    });
+  }
+
+  // For user.updated events, log metadata changes
+  if (eventType === 'user.updated') {
+    console.log('TEST WEBHOOK - User.updated event data:', {
+      userId: eventData?.id,
+      publicMetadata: eventData?.public_metadata,
+      privateMetadata: eventData?.private_metadata,
+      hasSubscriptionData: !!(eventData?.public_metadata?.planId || eventData?.public_metadata?.plan_id || eventData?.private_metadata?.planId),
       fullEventData: eventData
     });
   }
