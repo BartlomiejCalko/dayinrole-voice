@@ -165,60 +165,125 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Determine plan from event data
+      // Get current user subscription from Clerk API
+      console.log('Fetching current user subscription from Clerk API for user:', user_id);
       let planId = 'free'; // Default to free
+      let subscriptionStatus = 'active';
       
-      // Check various places where plan information might be stored
-      const planSources = [
-        eventData.plan_id,
-        eventData.subscription_plan_id,
-        eventData.public_metadata?.planId,
-        eventData.public_metadata?.plan_id,
-        eventData.public_metadata?.subscriptionPlan,
-        eventData.private_metadata?.planId,
-        eventData.private_metadata?.plan_id,
-        eventData.private_metadata?.subscriptionPlan,
-        eventData.metadata?.planId,
-        eventData.metadata?.plan_id,
-        eventData.metadata?.subscriptionPlan,
-      ];
-      
-      // Find the first non-null plan source
-      for (const source of planSources) {
-        if (source && typeof source === 'string') {
-          const planName = source.toLowerCase();
-          if (planName.includes('start') || planName === 'start') {
-            planId = 'start';
-            break;
-          } else if (planName.includes('pro') || planName === 'pro') {
-            planId = 'pro';
-            break;
-          } else if (planName !== 'free') {
-            // If it's not 'free' and doesn't match start/pro, assume it's a valid plan ID
-            planId = planName;
-            break;
+      try {
+        const clerkUserResponse = await fetch(`https://api.clerk.com/v1/users/${user_id}`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+          },
+        });
+        
+        if (clerkUserResponse.ok) {
+          const clerkUser = await clerkUserResponse.json();
+          console.log('Clerk user data for subscription check:', {
+            id: clerkUser.id,
+            public_metadata: clerkUser.public_metadata,
+            private_metadata: clerkUser.private_metadata,
+            subscription_data: clerkUser.subscription_data
+          });
+          
+          // Check various places where plan information might be stored in Clerk user data
+          const planSources = [
+            clerkUser.public_metadata?.planId,
+            clerkUser.public_metadata?.plan_id,
+            clerkUser.public_metadata?.subscriptionPlan,
+            clerkUser.public_metadata?.subscription_plan,
+            clerkUser.private_metadata?.planId,
+            clerkUser.private_metadata?.plan_id,
+            clerkUser.private_metadata?.subscriptionPlan,
+            clerkUser.private_metadata?.subscription_plan,
+          ];
+          
+          // Find the first non-null plan source
+          for (const source of planSources) {
+            if (source && typeof source === 'string') {
+              const planName = source.toLowerCase();
+              if (planName.includes('start') || planName === 'start') {
+                planId = 'start';
+                break;
+              } else if (planName.includes('pro') || planName === 'pro') {
+                planId = 'pro';
+                break;
+              } else if (planName !== 'free') {
+                // If it's not 'free' and doesn't match start/pro, assume it's a valid plan ID
+                planId = planName;
+                break;
+              }
+            }
           }
+          
+          // Also check for subscription status
+          const statusSources = [
+            clerkUser.public_metadata?.subscriptionStatus,
+            clerkUser.public_metadata?.subscription_status,
+            clerkUser.private_metadata?.subscriptionStatus,
+            clerkUser.private_metadata?.subscription_status,
+          ];
+          
+          for (const source of statusSources) {
+            if (source && typeof source === 'string') {
+              const status = source.toLowerCase();
+              if (['active', 'canceled', 'cancelled', 'past_due'].includes(status)) {
+                subscriptionStatus = status === 'cancelled' ? 'canceled' : status;
+                break;
+              }
+            }
+          }
+          
+          console.log('Plan detected from Clerk API:', planId, 'Status:', subscriptionStatus);
+        } else {
+          console.error('Failed to fetch user from Clerk API:', clerkUserResponse.status, clerkUserResponse.statusText);
+          
+          // Fallback: try to determine plan from webhook payload as backup
+          const planSources = [
+            eventData.plan_id,
+            eventData.subscription_plan_id,
+            eventData.public_metadata?.planId,
+            eventData.public_metadata?.plan_id,
+            eventData.public_metadata?.subscriptionPlan,
+          ];
+          
+          for (const source of planSources) {
+            if (source && typeof source === 'string') {
+              const planName = source.toLowerCase();
+              if (planName.includes('start') || planName === 'start') {
+                planId = 'start';
+                break;
+              } else if (planName.includes('pro') || planName === 'pro') {
+                planId = 'pro';
+                break;
+              }
+            }
+          }
+          
+          console.log('Fallback plan from webhook payload:', planId);
+        }
+      } catch (clerkError) {
+        console.error('Error fetching user subscription from Clerk:', clerkError);
+        
+        // For subscription.active events, assume it's not free (since free plans don't typically have active subscriptions)
+        if (eventType === 'subscription.active') {
+          planId = 'start'; // Default to 'start' for active subscription events
+          console.log('Using fallback plan for subscription.active event:', planId);
         }
       }
       
-      // For subscription.active events, assume it's not free (since free plans don't typically have active subscriptions)
-      if (eventType === 'subscription.active' && planId === 'free') {
-        // Default to 'start' if we can't determine the plan but it's an active subscription
-        planId = 'start';
-      }
+      console.log('Final determined plan ID:', planId, 'from event type:', eventType);
       
-      console.log('Determined plan ID:', planId, 'from event type:', eventType);
+      // Use the subscription status we got from Clerk API, with fallback to webhook data
+      let status: 'active' | 'canceled' | 'past_due' = subscriptionStatus as 'active' | 'canceled' | 'past_due';
       
-      // Determine subscription status
-      let status: 'active' | 'canceled' | 'past_due' = 'active';
-      if (eventData.status) {
+      // Fallback to webhook event data if we didn't get status from Clerk API
+      if (status === 'active' && eventData.status) {
         const eventStatus = eventData.status.toLowerCase();
         if (eventStatus === 'canceled' || eventStatus === 'cancelled') {
           status = 'canceled';
         } else if (eventStatus === 'past_due') {
           status = 'past_due';
-        } else {
-          status = 'active';
         }
       }
       
