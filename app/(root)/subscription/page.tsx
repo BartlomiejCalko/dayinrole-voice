@@ -97,11 +97,12 @@ const SubscriptionPageContent = () => {
       // First fetch current subscription
       fetchSubscription();
       
+      // 🚨 TEMPORARILY DISABLED AUTO-SYNC - it was overriding manual updates
       // Then automatically sync from Clerk in background (silent)
       // This ensures subscription is always up-to-date
-      setTimeout(() => {
-        backgroundSyncFromClerk();
-      }, 1000); // Small delay to avoid race conditions
+      // setTimeout(() => {
+      //   backgroundSyncFromClerk();
+      // }, 1000); // Small delay to avoid race conditions
     }
   }, [user, isLoaded]);
 
@@ -252,6 +253,8 @@ const SubscriptionPageContent = () => {
           }
         />
       </div>
+
+
 
       {/* FAQ Section */}
       <div className="max-w-4xl mx-auto mt-16">

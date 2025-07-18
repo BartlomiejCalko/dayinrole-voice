@@ -4,7 +4,6 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "@/lib/providers";
 import { ClerkProvider } from "@clerk/nextjs";
-import { UserInitializer } from "@/components/auth/UserInitializer";
 
 const monaSans = Mona_Sans({
   variable: "--font-mona-sans",
@@ -29,7 +28,6 @@ export default async function RootLayout({
           className={`${monaSans.className} antialiased`}
         >
           <Providers>
-            <UserInitializer />
             {children}
           </Providers>
 

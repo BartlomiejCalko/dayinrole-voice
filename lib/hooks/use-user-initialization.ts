@@ -40,24 +40,25 @@ export const useUserInitialization = () => {
         if (result.success) {
           console.log('User initialized successfully:', result.data);
           
+          // 🚨 TEMPORARILY DISABLED AUTO-SYNC - it was overriding manual updates
           // Also sync subscription from Clerk metadata as backup
-          setTimeout(async () => {
-            try {
-              console.log('Syncing subscription from Clerk as backup');
-              const syncResponse = await fetch('/api/subscription/manual-sync', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-              });
-              const syncResult = await syncResponse.json();
-              if (syncResult.success) {
-                console.log('Subscription synced from Clerk metadata');
-              }
-            } catch (error) {
-              console.log('Subscription sync failed (this is normal if webhook worked):', error);
-            }
-          }, 2000);
+          // setTimeout(async () => {
+          //   try {
+          //     console.log('Syncing subscription from Clerk as backup');
+          //     const syncResponse = await fetch('/api/subscription/manual-sync', {
+          //       method: 'POST',
+          //       headers: {
+          //         'Content-Type': 'application/json',
+          //       },
+          //     });
+          //     const syncResult = await syncResponse.json();
+          //     if (syncResult.success) {
+          //       console.log('Subscription synced from Clerk metadata');
+          //     }
+          //   } catch (error) {
+          //     console.log('Subscription sync failed (this is normal if webhook worked):', error);
+          //   }
+          // }, 2000);
           
         } else {
           console.error('Failed to initialize user:', result.error);
