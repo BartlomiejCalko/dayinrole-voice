@@ -17,9 +17,24 @@ interface ClerkUser {
 
 interface ClerkSubscription {
   id: string;
-  user_id: string;
+  user_id?: string;
   plan_id?: string;
   status?: string;
+  object: string;
+  payer?: {
+    user_id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  items?: Array<{
+    status: string;
+    plan: {
+      name: string;
+      slug: string;
+      amount: number;
+    };
+  }>;
   public_metadata?: {
     planId?: string;
     plan?: string;
@@ -37,7 +52,7 @@ const isClerkUser = (data: ClerkUser | ClerkSubscription): data is ClerkUser => 
 };
 
 const isClerkSubscription = (data: ClerkUser | ClerkSubscription): data is ClerkSubscription => {
-  return 'user_id' in data;
+  return 'object' in data && data.object === 'commerce_subscription';
 };
 
 // User event handlers
@@ -80,21 +95,48 @@ const deleteUser = async (userId: string): Promise<void> => {
 const extractPlanId = (data: ClerkUser | ClerkSubscription): string => {
   console.log('🔍 EXTRACTING PLAN ID');
   console.log('🔍 Is ClerkUser:', isClerkUser(data));
-  console.log('🔍 Raw metadata:', JSON.stringify(data.public_metadata || {}, null, 2));
   
   if (isClerkUser(data)) {
     const metadata = data.public_metadata;
-    console.log('🔍 User metadata fields:', Object.keys(metadata || {}));
+    console.log('🔍 User metadata:', JSON.stringify(metadata || {}, null, 2));
     const planId = metadata?.planId || metadata?.subscriptionPlan || 'free';
     console.log('🔍 Final extracted planId from user:', planId);
     return planId;
-  } else {
+  } else if (isClerkSubscription(data)) {
+    // Extract from Clerk Commerce subscription items
+    console.log('🔍 Subscription items:', JSON.stringify(data.items || [], null, 2));
+    
+    // Find the active subscription item
+    const activeItem = data.items?.find(item => item.status === 'active');
+    console.log('🔍 Active item found:', !!activeItem);
+    
+    if (activeItem) {
+      // Map Clerk plan slugs to our plan IDs
+      const planSlug = activeItem.plan.slug;
+      console.log('🔍 Plan slug from active item:', planSlug);
+      
+      let planId = 'free';
+      if (planSlug === 'start_plan' || planSlug.includes('start')) {
+        planId = 'start';
+      } else if (planSlug === 'pro_plan' || planSlug.includes('pro')) {
+        planId = 'pro';
+      } else if (planSlug === 'free' || activeItem.plan.amount === 0) {
+        planId = 'free';
+      }
+      
+      console.log('🔍 Mapped planId:', planId);
+      return planId;
+    }
+    
+    // Fallback to metadata if no active items
     const metadata = data.public_metadata;
-    console.log('🔍 Subscription metadata fields:', Object.keys(metadata || {}));
     const planId = metadata?.planId || 'free';
-    console.log('🔍 Final extracted planId from subscription:', planId);
+    console.log('🔍 Fallback planId from metadata:', planId);
     return planId;
   }
+  
+  console.log('🔍 Default fallback to free');
+  return 'free';
 };
 
 const handleSubscriptionEvent = async (data: ClerkUser | ClerkSubscription, eventType: string): Promise<void> => {
@@ -108,8 +150,9 @@ const handleSubscriptionEvent = async (data: ClerkUser | ClerkSubscription, even
     userId = data.id;
     console.log('🔥 Data is ClerkUser, userId:', userId);
   } else if (isClerkSubscription(data)) {
-    userId = data.user_id;
+    userId = data.payer?.user_id || data.user_id || '';
     console.log('🔥 Data is ClerkSubscription, userId:', userId);
+    console.log('🔥 Extracted from payer.user_id:', data.payer?.user_id);
   } else {
     console.log('🔥 ❌ Invalid data type for subscription event');
     throw new Error('Invalid data for subscription event');
