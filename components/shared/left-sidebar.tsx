@@ -37,7 +37,7 @@ const LeftSidebar = () => {
   }, []);
 
   return (
-    <aside className="hidden md:flex sticky left-0 md:top-14 w-64 flex-shrink-0 flex-col justify-between overflow-hidden border-r bg-background/60 p-4 h-screen">
+    <aside className="hidden md:flex sticky left-0 top-14 w-64 flex-shrink-0 flex-col justify-between overflow-hidden border-r bg-background/60 p-4 h-screen">
       <div className="flex flex-col gap-4">
         <div>
           <div className="text-sm text-muted-foreground">Plan</div>

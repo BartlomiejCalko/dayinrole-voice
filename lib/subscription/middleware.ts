@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth/verify';
 import { checkSubscriptionLimits } from './queries';
+import { getIsAdminByUserId } from '@/lib/auth/roles';
 
 export const requireActiveSubscription = async (req: NextRequest) => {
   try {
     const user = await verifyAuth();
+    if (await getIsAdminByUserId(user.uid)) return null; // admin bypass
     const limits = await checkSubscriptionLimits(user.uid);
     
     if (!limits.canGenerateDayInRole && !limits.canGenerateInterview) {
@@ -31,6 +33,7 @@ export const requireActiveSubscription = async (req: NextRequest) => {
 export const requireDayInRoleLimit = async (req: NextRequest) => {
   try {
     const user = await verifyAuth();
+    if (await getIsAdminByUserId(user.uid)) return null; // admin bypass
     const limits = await checkSubscriptionLimits(user.uid);
     
     if (!limits.canGenerateDayInRole) {
@@ -57,6 +60,7 @@ export const requireDayInRoleLimit = async (req: NextRequest) => {
 export const requireInterviewLimit = async (req: NextRequest) => {
   try {
     const user = await verifyAuth();
+    if (await getIsAdminByUserId(user.uid)) return null; // admin bypass
     const limits = await checkSubscriptionLimits(user.uid);
     
     if (!limits.canGenerateInterview) {

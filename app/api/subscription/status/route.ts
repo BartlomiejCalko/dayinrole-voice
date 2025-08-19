@@ -1,20 +1,45 @@
 import { NextRequest } from 'next/server';
 import { verifyAuth } from '@/lib/auth/verify';
 import { getUserSubscriptionStatus } from '@/lib/subscription';
+import { getIsAdminByUserId } from '@/lib/auth/roles';
 
 export async function GET(req: NextRequest) {
   try {
     const user = await verifyAuth();
-    const subscriptionStatus = await getUserSubscriptionStatus(user.uid);
+    const [subscriptionStatus, isAdmin] = await Promise.all([
+      getUserSubscriptionStatus(user.uid),
+      getIsAdminByUserId(user.uid),
+    ]);
+    
+    const effective = isAdmin
+      ? {
+          subscription: null,
+          isFreePlan: false,
+          planId: 'admin',
+          limits: {
+            dayInRoleLimit: 9999,
+            dayInRoleUsed: 0,
+            interviewLimit: 9999,
+            interviewsUsed: 0,
+            questionsPerInterview: 99,
+            canGenerateDayInRole: true,
+            canGenerateInterview: true,
+          },
+          hasActiveSubscription: true,
+        }
+      : {
+          subscription: subscriptionStatus.subscription,
+          isFreePlan: subscriptionStatus.isFreePlan,
+          planId: subscriptionStatus.planId,
+          limits: subscriptionStatus.limits,
+          hasActiveSubscription: subscriptionStatus.subscription?.status === 'active',
+        };
     
     // Add cache-busting headers
     const response = Response.json({ 
-      subscription: subscriptionStatus.subscription,
-      isFreePlan: subscriptionStatus.isFreePlan,
-      planId: subscriptionStatus.planId,
-      limits: subscriptionStatus.limits,
-      hasActiveSubscription: subscriptionStatus.subscription?.status === 'active',
-      timestamp: Date.now() // Add timestamp to ensure fresh data
+      ...effective,
+      isAdmin,
+      timestamp: Date.now()
     });
     
     // Prevent caching
