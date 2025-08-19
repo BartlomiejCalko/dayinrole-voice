@@ -36,9 +36,13 @@ const DashboardPage = () => {
       const response = await fetch('/api/subscription/status');
       if (response.ok) {
         const data = await response.json();
+        const isAdmin = !!data.isAdmin;
+        const computedIsFree = isAdmin ? false : (!data.subscription || data.subscription.plan_id === 'free');
+        const planId = isAdmin ? 'admin' : (data.subscription?.plan_id || 'free');
+
         setUserSubscription({
-          isFreePlan: !data.subscription || data.subscription.plan_id === 'free',
-          planId: data.subscription?.plan_id || 'free',
+          isFreePlan: computedIsFree,
+          planId,
           limits: data.limits || {
             dayInRoleLimit: 0,
             dayInRoleUsed: 0,
@@ -90,8 +94,8 @@ const DashboardPage = () => {
   const fetchDayInRoles = async () => {
     if (!user || !userSubscription) return;
 
-    // Skip fetching user data for free plan users
-    if (userSubscription.isFreePlan) {
+    // Skip fetching user data for free plan users (but not for admin)
+    if (userSubscription.isFreePlan && userSubscription.planId !== 'admin') {
       setDayInRoles([]);
       setLoadingDayInRoles(false);
       return;
@@ -167,11 +171,11 @@ const DashboardPage = () => {
   };
 
   const handleCreateClick = () => {
-    if (userSubscription?.isFreePlan) {
+    if (userSubscription?.isFreePlan && userSubscription.planId !== 'admin') {
       toast.error('Free plan users can only view examples. Please upgrade to create your own Day-in-Role experiences.');
       return;
     }
-    // Allow navigation for paid users
+    // Allow navigation for paid users or admin
     window.location.href = '/dayinrole/create';
   };
 
@@ -206,7 +210,7 @@ const DashboardPage = () => {
 
       <div className="relative z-10 space-y-8">
         {/* Free Plan Upgrade Section */}
-        {userSubscription?.isFreePlan && (
+        {userSubscription?.isFreePlan && userSubscription.planId !== 'admin' && (
           <Card className="border-2 border-dashed border-muted-foreground/25 bg-muted/10">
             <CardHeader className="text-center pb-2">
               <CardTitle className="text-2xl font-bold text-foreground">
@@ -231,16 +235,15 @@ const DashboardPage = () => {
         <section className="flex flex-row bg-gradient-to-b from-purple-900/20 to-blue-900/20 dark:from-purple-900/30 dark:to-blue-900/30 backdrop-blur-sm rounded-3xl px-16 py-6 items-center justify-between max-sm:px-4 max-sm:flex-col max-sm:gap-6 border border-white/10">
           <div className="flex flex-col gap-6 max-w-lg">
             <h2 className="text-3xl font-semibold text-foreground">
-              {userSubscription?.isFreePlan ? 'Explore Examples of Day in Role' : 'Be familiar with a day in your new job'}
+              {userSubscription?.isFreePlan && userSubscription.planId !== 'admin' ? 'Explore Examples of Day in Role' : 'Be familiar with a day in your new job'}
             </h2>
             <p className="text-lg text-muted-foreground">
-              {userSubscription?.isFreePlan 
+              {userSubscription?.isFreePlan && userSubscription.planId !== 'admin'
                 ? 'Browse through our curated examples to see what a Day-in-Role experience looks like. Upgrade to create your own personalized experiences.'
-                : 'Get a glimpse of your future work life with our unique day-in-role experience. Explore the tasks, challenges, and culture of your potential workplace before you even step through the door.'
-              }
+                : 'Get a glimpse of your future work life with our unique day-in-role experience. Explore the tasks, challenges, and culture of your potential workplace before you even step through the door.'}
             </p>
             <div className="flex gap-3 max-sm:flex-col">
-              {userSubscription?.isFreePlan ? (
+              {userSubscription?.isFreePlan && userSubscription.planId !== 'admin' ? (
                 <>
                   <Button 
                     onClick={handleCreateClick}
@@ -281,7 +284,7 @@ const DashboardPage = () => {
         </section>
 
         {/* Your Day in Role Experiences Section (for paid users) */}
-        {!userSubscription?.isFreePlan && (
+        {!userSubscription?.isFreePlan || userSubscription.planId === 'admin' ? (
           <section className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
               <h2 className="text-3xl font-semibold text-foreground">Your Day in Role Experiences</h2>
@@ -347,10 +350,10 @@ const DashboardPage = () => {
               )}
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* Sample Day in Role Experiences Section (only for Free plan users) */}
-        {userSubscription?.isFreePlan && (
+        {userSubscription?.isFreePlan && userSubscription.planId !== 'admin' && (
           <section className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
