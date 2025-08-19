@@ -1,6 +1,9 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { createServiceClient } from '@/utils/supabase/server';
+import { InterviewGenerateSchema } from '@/lib/validation/interview';
+import { apiError } from '@/lib/api/response';
+import { buildRateKey, rateLimit } from '@/lib/rate-limit';
 
 interface InterviewQuestion {
   id: string;
@@ -153,7 +156,18 @@ function getLanguageInstructions(language: string): string {
 
 export async function POST(request: Request) {
     try {
-        const { dayInRole, numberOfQuestions, userId }: GenerateQuestionsRequest = await request.json();
+        const raw = await request.json();
+        const parsedBody = InterviewGenerateSchema.safeParse(raw);
+        if (!parsedBody.success) {
+            return apiError('Invalid request body', 400, { issues: parsedBody.error.flatten() });
+        }
+        const { dayInRole, numberOfQuestions, userId }: GenerateQuestionsRequest = parsedBody.data as any;
+
+        // Simple rate limit: 15 requests / 60s per user+IP for question generation
+        const rl = rateLimit({ key: buildRateKey(request as any, userId, 'api:interview:generate'), limit: 15, windowMs: 60_000 });
+        if (!rl.allowed) {
+            return apiError('Too many requests. Please slow down.', 429);
+        }
 
         if (!dayInRole || !numberOfQuestions || !userId) {
             return Response.json({ 
@@ -402,15 +416,6 @@ ${detectedLanguage === 'norwegian' ? `[
 
     } catch (error) {
         console.error('Error generating interview questions:', error);
-        
-        let errorMessage = "Failed to generate interview questions";
-        if (error instanceof Error) {
-            errorMessage = `Failed to generate interview questions: ${error.message}`;
-        }
-        
-        return Response.json({ 
-            success: false, 
-            message: errorMessage
-        }, { status: 500 });
+        return apiError('Failed to generate interview questions', 500);
     }
 } 

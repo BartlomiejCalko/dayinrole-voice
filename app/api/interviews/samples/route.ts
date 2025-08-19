@@ -1,0 +1,1 @@
+export { GET } from '../../interview/samples/route'; 

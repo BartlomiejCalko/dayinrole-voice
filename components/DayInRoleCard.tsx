@@ -15,8 +15,8 @@ const DayInRoleCard = ({
   const formattedDate = dayjs(createdAt || Date.now()).format('MMM D, YYYY');
   
   return (
-    <div className="w-[360px] max-sm:w-full min-h-96 p-0.5 bg-gradient-to-b from-purple-700/20 to-blue-900/20 dark:from-purple-700/50 dark:to-blue-900/30 rounded-2xl">
-      <div className="bg-card/0 dark:bg-card/40 backdrop-blur-sm rounded-2xl min-h-full flex flex-col p-6 relative overflow-hidden gap-10 justify-between border border-border/20">
+    <div className="w-full h-[520px] p-0.5 bg-gradient-to-b from-purple-700/20 to-blue-900/20 dark:from-purple-700/50 dark:to-blue-900/30 rounded-2xl">
+      <div className="bg-card/0 dark:bg-card/40 backdrop-blur-sm rounded-2xl h-full flex flex-col p-6 relative overflow-hidden gap-10 justify-between border border-border/20">
         <div>
           <div className="absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-lg bg-green-500/20 dark:bg-green-500/10 border border-border/20">
             <p className="text-sm font-semibold text-foreground">Day in Role</p>
@@ -32,7 +32,7 @@ const DayInRoleCard = ({
               className="rounded-full object-cover size-[90px] bg-white p-2 items-center justify-center" 
               onError={(e) => {
                 // Fallback to company name if logo fails to load
-                e.currentTarget.style.display = 'none';
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
                 e.currentTarget.nextElementSibling?.classList.remove('hidden');
               }}
             />
@@ -45,7 +45,7 @@ const DayInRoleCard = ({
             </span>
           </div>
           
-          <h3 className="mt-5 capitalize text-2xl font-semibold text-foreground">
+          <h3 className="mt-5 capitalize text-2xl font-semibold text-foreground line-clamp-2">
             {position}
           </h3>
           <p className="text-lg font-medium text-muted-foreground mb-3">

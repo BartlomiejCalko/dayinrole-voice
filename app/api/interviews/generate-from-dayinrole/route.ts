@@ -3,6 +3,9 @@ import { google } from '@ai-sdk/google';
 import { createServiceClient } from '@/utils/supabase/server';
 import { requireInterviewLimit } from '@/lib/subscription/middleware';
 import { incrementInterviewUsage } from '@/lib/subscription/queries';
+import { InterviewFromDayInRoleSchema } from '@/lib/validation/interview';
+import { apiError } from '@/lib/api/response';
+import { buildRateKey, rateLimit } from '@/lib/rate-limit';
 
 // Enhanced language detection function that analyzes job content
 function detectLanguageFromJobContent(content: string): string {
@@ -135,14 +138,31 @@ export async function POST(request: Request) {
         const limitCheck = await requireInterviewLimit(request as any);
         if (limitCheck) return limitCheck;
 
-        const { 
-            dayInRoleId, 
-            userId, 
-            questionCount, 
-            role, 
-            companyName, 
-            techstack 
+        // Simple rate limit: 15 requests / 60s per user+IP for interview generation
+        let tempUserId: string | null = null;
+        try {
+            const body = await request.clone().json();
+            tempUserId = body?.userId || null;
+        } catch {}
+        const rl = rateLimit({ key: buildRateKey(request as any, tempUserId, 'api:interviews:generate-from-dayinrole'), limit: 15, windowMs: 60_000 });
+        if (!rl.allowed) {
+            return apiError('Too many requests. Please slow down.', 429);
+        }
+
+        const {
+            dayInRoleId,
+            userId,
+            questionCount,
+            role,
+            companyName,
+            techstack
         } = await request.json();
+
+        // Zod validation
+        const parsed = InterviewFromDayInRoleSchema.safeParse({ dayInRoleId, userId, questionCount, role, companyName, techstack });
+        if (!parsed.success) {
+            return apiError('Invalid request body', 400, { issues: parsed.error.flatten() });
+        }
 
         // Validate required fields
         if (!dayInRoleId || !userId || !role || !companyName) {

@@ -7,10 +7,24 @@ import { requireDayInRoleLimit } from '@/lib/subscription/middleware';
 import { incrementDayInRoleUsage } from '@/lib/subscription/queries';
 import { NextRequest } from 'next/server';
 import { checkSubscriptionLimits } from '@/lib/subscription';
+import { DayInRoleGenerateSchema } from '@/lib/validation/dayinrole';
+import { apiError } from '@/lib/api/response';
+import { buildRateKey, rateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
     try {
-        const { jobOfferText, userId, language = 'english', inputType = 'text' } = await request.json();
+        const raw = await request.json();
+        const parsed = DayInRoleGenerateSchema.safeParse(raw);
+        if (!parsed.success) {
+            return apiError('Invalid request body', 400, { issues: parsed.error.flatten() });
+        }
+        const { jobOfferText, userId, language = 'english', inputType = 'text' } = parsed.data;
+
+        // Simple rate limit: 10 requests / 60s per user+IP for generation
+        const rl = rateLimit({ key: buildRateKey(request as any, userId, 'api:dayinrole:generate'), limit: 10, windowMs: 60_000 });
+        if (!rl.allowed) {
+            return apiError('Too many requests. Please slow down.', 429);
+        }
 
         if (!jobOfferText || !userId) {
             return Response.json({ 

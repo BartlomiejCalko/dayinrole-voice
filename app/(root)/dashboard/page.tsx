@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -213,7 +213,7 @@ const DashboardPage = () => {
                 🚀 Ready to Create Your Own Experiences?
               </CardTitle>
               <CardDescription className="text-base text-muted-foreground max-w-2xl mx-auto">
-                You're currently on the free plan. Upgrade to start creating personalized Day-in-Role experiences and unlock all features.
+                You&apos;re currently on the free plan. Upgrade to start creating personalized Day-in-Role experiences and unlock all features.
               </CardDescription>
               <div className="flex justify-center mt-4">
                 <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
@@ -290,14 +290,14 @@ const DashboardPage = () => {
               </Button>
             </div>
             
-            <div className="flex flex-wrap gap-4 max-lg:flex-col w-full items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 w-full items-stretch">
               {loadingDayInRoles ? (
-                <div className="flex items-center justify-center w-full py-8">
+                <div className="col-span-full flex items-center justify-center w-full py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   <span className="ml-2 text-muted-foreground">Loading your experiences...</span>
                 </div>
               ) : error ? (
-                <div className="text-center py-12 w-full">
+                <div className="col-span-full text-center py-12 w-full">
                   <div className="max-w-md mx-auto">
                     <div className="text-red-500 mb-4">
                       <h3 className="text-xl font-semibold mb-2">Error Loading Data</h3>
@@ -310,19 +310,20 @@ const DashboardPage = () => {
                 </div>
               ) : dayInRoles.length > 0 ? (
                 dayInRoles.map((dayInRole) => (
-                  <DayInRoleCard 
-                    key={dayInRole.id}
-                    dayInRoleId={dayInRole.id}
-                    companyName={dayInRole.companyName}
-                    companyLogo={dayInRole.companyLogo}
-                    position={dayInRole.position}
-                    description={dayInRole.description}
-                    challenges={dayInRole.challenges}
-                    createdAt={dayInRole.createdAt}
-                  />
+                  <div key={dayInRole.id} className="w-full">
+                    <DayInRoleCard 
+                      dayInRoleId={dayInRole.id}
+                      companyName={dayInRole.companyName}
+                      companyLogo={dayInRole.companyLogo}
+                      position={dayInRole.position}
+                      description={dayInRole.description}
+                      challenges={dayInRole.challenges}
+                      createdAt={dayInRole.createdAt}
+                    />
+                  </div>
                 ))
               ) : (
-                <div className="text-center py-12 w-full">
+                <div className="col-span-full text-center py-12 w-full">
                   <div className="max-w-md mx-auto">
                     <Image 
                       src="/robot.png" 
