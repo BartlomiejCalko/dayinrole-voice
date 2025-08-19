@@ -31,9 +31,12 @@ const CreateDayInRolePage = () => {
       const response = await fetch('/api/subscription/status');
       if (response.ok) {
         const data = await response.json();
+        const isAdmin = !!data.isAdmin;
+        const computedIsFree = isAdmin ? false : (!data.subscription || data.subscription.plan_id === 'free');
+        const planId = isAdmin ? 'admin' : (data.subscription?.plan_id || 'free');
         setUserSubscription({
-          isFreePlan: !data.subscription || data.subscription.plan_id === 'free',
-          planId: data.subscription?.plan_id || 'free',
+          isFreePlan: computedIsFree,
+          planId,
           limits: data.limits || {
             dayInRoleLimit: 0,
             dayInRoleUsed: 0,
@@ -78,7 +81,7 @@ const CreateDayInRolePage = () => {
     }
 
     // Check if user can generate Day-in-Role
-    if (userSubscription?.isFreePlan) {
+    if (userSubscription?.isFreePlan && userSubscription.planId !== 'admin') {
       toast.error('Free plan users can only view examples. Please upgrade to create your own Day-in-Role experiences.');
       return;
     }
@@ -157,7 +160,7 @@ const CreateDayInRolePage = () => {
   }
 
   // If user is on free plan, show upgrade prompt
-  if (userSubscription.isFreePlan) {
+  if (userSubscription.isFreePlan && userSubscription.planId !== 'admin') {
     return (
       <div className="relative min-h-screen bg-background dark:bg-neutral-950">
         {/* Background gradient */}
