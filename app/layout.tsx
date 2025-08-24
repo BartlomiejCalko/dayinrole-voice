@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "@/lib/providers";
 import { ClerkProvider } from "@clerk/nextjs";
+import CookieConsent from "@/components/CookieConsent";
 
 const monaSans = Mona_Sans({
   variable: "--font-mona-sans",
@@ -11,8 +12,8 @@ const monaSans = Mona_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Day In Role Voice",
-  description: "An AI powered voice assistant for analyzing job offer",
+  title: "Day In Role",
+  description: "An AI powered assistant for analyzing job offers",
 };
 
 export default async function RootLayout({
@@ -29,6 +30,8 @@ export default async function RootLayout({
         >
           <Providers>
             {children}
+            {/* Cookie consent runs client-side globally */}
+            <CookieConsent />
           </Providers>
 
           <Toaster />

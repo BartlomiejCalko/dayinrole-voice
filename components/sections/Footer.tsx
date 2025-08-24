@@ -84,6 +84,16 @@ export const Footer = () => {
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new Event("open-cookie-settings"))}
+                  className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors duration-200 underline"
+                  aria-label="Open cookie settings"
+                >
+                  Cookie Settings
+                </button>
+              </li>
             </ul>
           </motion.div>
         </div>
