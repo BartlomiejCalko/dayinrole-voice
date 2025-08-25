@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/shared/icons";
+import Image from "next/image";
 import { ModeToggle } from "./mode-toggle";
 
 const routes = [
@@ -33,8 +33,8 @@ export const Navbar = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur">
       <div className="container flex h-14 max-w-screen-xl items-center justify-between mx-auto px-4">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center space-x-2">
-            <Icons.logo className="h-6 w-6" />
+          <Link href="/" className="flex items-center">
+            <Image src="/logo1.svg" alt="Day in Role logo" width={196} height={101} className="h-4 w-auto" />
             <span className="font-bold">dayinrole</span>
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">

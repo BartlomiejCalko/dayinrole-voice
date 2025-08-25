@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { itemVariants } from "@/lib/animations";
+import Image from "next/image";
 
 const footerLinks = {
   navigation: [
@@ -32,11 +33,9 @@ export const Footer = () => {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            <Link href="/" className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">D</span>
-              </div>
-              <span className="font-bold text-xl">Day in Role</span>
+            <Link href="/" className="flex items-center mb-4">
+              <Image src="/logo1.svg" alt="Day in Role logo" width={196} height={101} className="h-4 w-auto" />
+              <span className="font-bold">dayinrole</span>
             </Link>
             <p className="text-gray-500 dark:text-gray-400 max-w-sm">
               Understand what your next job will really be like. Get detailed day-in-role insights for any position.

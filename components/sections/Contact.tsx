@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { useAnimate } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { HighlightGroup, HighlighterItem, Particles } from "@/components/ui/highlighter";
 import { Copy, Check } from "lucide-react";
-import { Icons } from "@/components/shared/icons";
+import Image from "next/image";
 
 export const ContactSection: React.FC = () => {
   const email = "support@dayinrole.net";
@@ -62,7 +61,7 @@ export const ContactSection: React.FC = () => {
   }, [animate]);
 
   return (
-    <section className="relative w-full min-h-[calc(100vh-3.5rem)] flex items-center justify-center bg-background dark:bg-neutral-950">
+    <section className="relative w-full min-h-[calc(100vh-29rem)] flex items-center justify-center bg-background dark:bg-neutral-950">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[40%] -right-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 blur-3xl" />
         <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-blue-500/20 to-green-500/20 blur-3xl" />
@@ -85,7 +84,7 @@ export const ContactSection: React.FC = () => {
                     className="relative mx-auto h-[270px] w-[300px] md:h-[270px] md:w-[300px]"
                     ref={scope}
                   >
-                    <Icons.logo className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2" />
+                    <Image src="/logo1.svg" alt="Day in Role logo" width={196} height={101} className="absolute left-1/2 top-1/2 h-6 w-auto -translate-x-1/2 -translate-y-1/2" />
                     <div
                       id="next-js"
                       className="absolute bottom-12 left-14 rounded-3xl border border-slate-400 bg-slate-200 px-2 py-1.5 text-xs opacity-50 dark:border-slate-600 dark:bg-slate-800"
