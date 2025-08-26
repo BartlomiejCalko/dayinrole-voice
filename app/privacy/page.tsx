@@ -17,7 +17,7 @@ const PrivacyPage = () => {
               <h2 className="text-xl font-semibold mb-2">1. Controller</h2>
               <p className="text-foreground/80">
                 Day in Role (the "Controller") is responsible for your personal data when you use our services. For privacy matters,
-                contact: <a href="mailto:support@dayinrole.app" className="text-primary underline">support@dayinrole.net</a>.
+                contact: <a href="mailto:support@dayinrole.net" className="text-primary underline">support@dayinrole.net</a>.
               </p>
             </section>
 
@@ -108,7 +108,7 @@ const PrivacyPage = () => {
             <section>
               <h2 className="text-xl font-semibold mb-2">12. Contact</h2>
               <p className="text-foreground/80">
-                For privacy questions, contact <a href="mailto:support@dayinrole.app" className="text-primary underline">support@dayinrole.app</a>.
+                For privacy questions, contact <a href="mailto:support@dayinrole.net" className="text-primary underline">support@dayinrole.net</a>.
               </p>
             </section>
           </div>

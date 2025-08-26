@@ -55,7 +55,7 @@ const CookiesPage = () => {
             <section>
               <h2 className="text-xl font-semibold mb-2">6. Contact</h2>
               <p className="text-foreground/80">
-                Questions about this policy? Email <a href="mailto:support@dayinrole.app" className="text-primary underline">support@dayinrole.app</a>.
+                Questions about this policy? Email <a href="mailto:support@dayinrole.net" className="text-primary underline">support@dayinrole.net</a>.
               </p>
             </section>
           </div>

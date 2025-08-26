@@ -68,7 +68,7 @@ const TermsPage = () => {
               <h2 className="text-xl font-semibold mb-2">7. Refund and dispute policy</h2>
               <ul className="list-disc pl-6 space-y-1 text-foreground/80">
                 <li><strong>EEA/Norway consumers:</strong> If you are a consumer located in Norway or the EEA, you may have a 14‑day right of withdrawal for your first purchase of a subscription. If you request immediate access to digital services and acknowledge that this waives the withdrawal right, we may provide access immediately and the statutory withdrawal right may not apply.</li>
-                <li>We consider good‑faith refund requests for billing errors or accidental charges. Contact <a href="mailto:support@dayinrole.app" className="text-primary underline">support@dayinrole.app</a> before initiating a chargeback so we can help.</li>
+                <li>We consider good‑faith refund requests for billing errors or accidental charges. Contact <a href="mailto:support@dayinrole.net" className="text-primary underline">support@dayinrole.net</a> before initiating a chargeback so we can help.</li>
                 <li>Except as required by law or expressly stated above, fees are non‑refundable and partial periods are not credited.</li>
               </ul>
             </section>
@@ -135,7 +135,7 @@ const TermsPage = () => {
             <section>
               <h2 className="text-xl font-semibold mb-2">15. Contact</h2>
               <p className="text-foreground/80">
-                Questions? Contact us at <a href="mailto:support@dayinrole.app" className="text-primary underline">support@dayinrole.app</a>.
+                Questions? Contact us at <a href="mailto:support@dayinrole.net" className="text-primary underline">support@dayinrole.net</a>.
               </p>
             </section>
           </div>

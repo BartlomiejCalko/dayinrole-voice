@@ -8,7 +8,7 @@ import { Copy, Check } from "lucide-react";
 import Image from "next/image";
 
 export const ContactSection: React.FC = () => {
-  const email = "support@dayinrole.net";
+  const email = "support@dayinrole.app";
   const [scope, animate] = useAnimate();
   const [copied, setCopied] = React.useState(false);
   const handleCopyEmail = async () => {
@@ -159,6 +159,10 @@ export const ContactSection: React.FC = () => {
                         <span className="sr-only">{copied ? "Email copied" : "Copy email to clipboard"}</span>
                       </Button>
                       <span role="status" aria-live="polite" className="sr-only">{copied ? "Copied email to clipboard" : ""}</span>
+                    </div>
+                    <div className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-300" aria-label="Business information">
+                      <p><span className="font-medium">Business:</span> Day in Role</p>
+                      <p><span className="font-medium">Owner:</span> Bartłomiej Całko</p>
                     </div>
                     
                   </div>
