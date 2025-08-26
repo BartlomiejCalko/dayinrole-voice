@@ -238,7 +238,7 @@ const DayInRoleDetailPage = () => {
   const formattedDate = dayjs(dayInRole.createdAt).format('MMMM D, YYYY');
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       {/* Background gradient */}
       <div className="fixed inset-0 pointer-events-none -z-10">
         <div className="absolute -top-[40%] -right-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 blur-3xl" />
@@ -246,7 +246,7 @@ const DayInRoleDetailPage = () => {
       </div>
 
       <div className="relative z-10 py-8">
-        <div className="container mx-auto px-2 sm:px-4 max-w-4xl">
+        <div className="container mx-auto px-0 sm:px-4 max-w-4xl">
           {/* Header */}
           <div className="text-center mb-8">
             {/* Sample Data Alert */}
@@ -469,7 +469,7 @@ const DayInRoleDetailPage = () => {
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 px-3 sm:px-6">
+            <CardContent className="pt-0 px-0 sm:px-6">
               <div className="bg-background/0 backdrop-blur-sm rounded-lg p-3 sm:p-6 border border-border/0">
                 <div className="text-foreground leading-relaxed whitespace-pre-line break-words text-sm sm:text-base md:text-lg font-normal sm:font-medium">
                   {dayInRole.description}
