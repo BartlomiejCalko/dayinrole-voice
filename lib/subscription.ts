@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/utils/supabase/server';
 import { SUBSCRIPTION_PLANS } from '@/constants/subscription-plans';
+import { getIsAdminByUserId } from '@/lib/auth/roles';
 
 export const getUserSubscriptionStatus = async (userId: string): Promise<{
   isFreePlan: boolean;
@@ -97,6 +98,13 @@ export const checkSubscriptionLimits = async (userId: string, action: 'dayinrole
   reason?: string;
   planId: string;
 }> => {
+  // Admins bypass all limits
+  try {
+    if (await getIsAdminByUserId(userId)) {
+      return { allowed: true, planId: 'admin' };
+    }
+  } catch {}
+
   const { isFreePlan, planId, limits } = await getUserSubscriptionStatus(userId);
 
   if (isFreePlan) {

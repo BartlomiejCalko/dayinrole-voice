@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Lock, Sparkles } from "lucide-react";
+import { Crown, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuthGuard } from "@/lib/hooks/use-auth-guard";
@@ -17,7 +17,7 @@ import SampleInterviewQuestions from "@/components/SampleInterviewQuestions";
 import Link from "next/link";
 
 const DayInRoleDetailPage = () => {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const router = useRouter();
   const [dayInRole, setDayInRole] = useState<DayInRole | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,9 +46,12 @@ const DayInRoleDetailPage = () => {
       const response = await fetch('/api/subscription/status');
       if (response.ok) {
         const data = await response.json();
+        const isAdmin = !!data.isAdmin;
+        const computedIsFree = isAdmin ? false : (!data.subscription || data.subscription.plan_id === 'free');
+        const planId = isAdmin ? 'admin' : (data.subscription?.plan_id || 'free');
         setUserSubscription({
-          isFreePlan: !data.subscription || data.subscription.plan_id === 'free',
-          planId: data.subscription?.plan_id || 'free',
+          isFreePlan: computedIsFree,
+          planId,
           limits: data.limits || {
             dayInRoleLimit: 0,
             dayInRoleUsed: 0,
@@ -80,12 +83,12 @@ const DayInRoleDetailPage = () => {
   };
 
   const fetchDayInRole = async () => {
-    if (!params.id) return;
+    if (!params?.id) return;
 
     try {
       // First try to fetch from regular API
-      let response = await fetch(`/api/dayinrole/${params.id}?userId=${user?.id}`);
-      let result = await response.json();
+      const response = await fetch(`/api/dayinrole/${params.id}?userId=${user?.id}`);
+      const result = await response.json();
 
       if (result.success) {
         setDayInRole(result.data);
@@ -96,7 +99,7 @@ const DayInRoleDetailPage = () => {
         const sampleResult = await sampleResponse.json();
 
         if (sampleResult.success) {
-          const sampleItem = sampleResult.data.find((item: DayInRole) => item.id === params.id);
+          const sampleItem = sampleResult.data.find((item: DayInRole) => item.id === params?.id);
           if (sampleItem) {
             setDayInRole(sampleItem);
             setIsSampleData(true);
@@ -115,7 +118,7 @@ const DayInRoleDetailPage = () => {
   };
 
   const fetchExistingQuestions = async () => {
-    if (!dayInRole || !user || isSampleData || userSubscription?.isFreePlan) return;
+    if (!dayInRole || !user || isSampleData || (userSubscription?.isFreePlan && userSubscription.planId !== 'admin')) return;
 
     setLoadingQuestions(true);
     try {
@@ -139,7 +142,7 @@ const DayInRoleDetailPage = () => {
     if (!dayInRole || !user) return;
 
     // Check if user can generate questions
-    if (userSubscription?.isFreePlan || isSampleData) {
+    if ((userSubscription?.isFreePlan && userSubscription.planId !== 'admin') || isSampleData) {
       toast.error('Free plan users can only view sample questions. Please upgrade to generate custom interview questions.');
       return;
     }
@@ -186,7 +189,7 @@ const DayInRoleDetailPage = () => {
     }
   };
 
-  const handleOpenExistingQuestions = (questionSet: any) => {
+  const handleOpenExistingQuestions = (questionSet: InterviewQuestionSet) => {
     // Navigate to interview page with question set ID
     const searchParams = new URLSearchParams({
       questionSetId: questionSet.id,
@@ -198,10 +201,10 @@ const DayInRoleDetailPage = () => {
   };
 
   useEffect(() => {
-    if (params.id) {
+    if (params?.id) {
       fetchDayInRole();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   useEffect(() => {
     if (user) {
