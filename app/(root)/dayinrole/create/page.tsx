@@ -288,36 +288,32 @@ const CreateDayInRolePage = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-background dark:bg-neutral-950">
+    <div className="relative min-h-screen bg-background dark:bg-neutral-950 w-full">
       {/* Background gradient */}
       <div className="inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[40%] -right-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 blur-3xl" />
         <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-blue-500/20 to-green-500/20 blur-3xl" />
       </div>
 
-      <div className="relative z-10 py-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-6">
-              <Button asChild variant="outline">
+      <div className="relative z-10 py-6 sm:py-12">
+        <div className="container mx-auto px-0 sm:px-2">
+          <div className="text-center mb-10 sm:mb-18">
+            <div className="md:flex justify-center mb-6 hidden">
+              <Button asChild variant="outline" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
                 <Link href="/dashboard">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Dashboard
                 </Link>
               </Button>
             </div>
-            <h1 className="text-4xl font-bold text-foreground mb-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2 sm:mb-4">
               Create Your Day in Role Experience
             </h1>
-            {/* <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Transform any job offer into an immersive preview of your potential workday. 
-              Simply paste a job posting URL or text to discover the daily tasks, challenges, and culture before you apply.
-            </p> */}
           </div>
           
           <DayInRoleForm onSubmit={handleSubmit} isLoading={isLoading} />
           
-          <div className="text-center mt-8">
+          <div className="text-center mt-6 sm:mt-8 hidden sm:block">
             <p className="text-sm text-muted-foreground">
               💡 Try pasting a job posting URL from LinkedIn, Indeed, Glassdoor, or any job board for instant extraction!
             </p>

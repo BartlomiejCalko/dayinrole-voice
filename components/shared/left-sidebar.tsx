@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Home, Layers, MessageSquare, CreditCard, HelpCircle, BarChart3, Settings } from "lucide-react";
 
 const routes = [
-  { name: "Overview", href: "/dashboard", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Create Day‑in‑Role", href: "/dayinrole/create", icon: Layers },
   { name: "Interviews", href: "/interview", icon: MessageSquare },
   { name: "Usage & Limits", href: "/dashboard/usage", icon: BarChart3 },

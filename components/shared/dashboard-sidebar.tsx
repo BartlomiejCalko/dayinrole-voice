@@ -14,7 +14,7 @@ type DashboardSidebarProps = {
 };
 
 const routes = [
-  { name: "Overview", href: "/dashboard", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Create Day-in-Role", href: "/dayinrole/create", icon: Layers },
   { name: "Interviews", href: "/interview", icon: MessageSquare },
   { name: "Usage & Limits", href: "/dashboard/usage", icon: BarChart3 },

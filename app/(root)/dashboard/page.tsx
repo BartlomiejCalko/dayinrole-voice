@@ -232,7 +232,7 @@ const DashboardPage = () => {
         )}
 
         {/* CTA Section */}
-        <section className="flex flex-row bg-gradient-to-b from-purple-900/20 to-blue-900/20 dark:from-purple-900/30 dark:to-blue-900/30 backdrop-blur-sm rounded-3xl px-16 py-6 items-center justify-between max-sm:px-4 max-sm:flex-col max-sm:gap-6 border border-white/10">
+        <section className="flex flex-row bg-gradient-to-b from-purple-900/20 to-blue-900/20 dark:from-purple-900/10 dark:to-blue-900/20 backdrop-blur-sm rounded-3xl px-16 py-6 items-center justify-between max-sm:px-4 max-sm:flex-col max-sm:gap-6 border border-white/10">
           <div className="flex flex-col gap-6 max-w-lg">
             <h2 className="text-3xl font-semibold text-foreground">
               {userSubscription?.isFreePlan && userSubscription.planId !== 'admin' ? 'Explore Examples of Day in Role' : 'Be familiar with a day in your new job'}
