@@ -8,7 +8,7 @@ import { Copy, Check } from "lucide-react";
 import Image from "next/image";
 
 export const ContactSection: React.FC = () => {
-  const email = "support@dayinrole.app";
+  const email = "support@dayinrole.net";
   const [scope, animate] = useAnimate();
   const [copied, setCopied] = React.useState(false);
   const handleCopyEmail = async () => {
