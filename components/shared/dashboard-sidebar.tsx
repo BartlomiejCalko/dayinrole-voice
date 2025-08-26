@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ModeToggle } from "@/components/shared/mode-toggle";
 import { cn } from "@/lib/utils";
-import { Home, Layers, MessageSquare, CreditCard, HelpCircle, ChevronLeft, ChevronRight, BarChart3, Settings } from "lucide-react";
+import { Home, Layers, MessageSquare, CreditCard, ChevronLeft, ChevronRight, BarChart3 } from "lucide-react";
 
 type DashboardSidebarProps = {
   leftOffset?: number;
@@ -115,32 +115,8 @@ export const DashboardSidebar = ({ leftOffset = 0 }: DashboardSidebarProps) => {
         {SidebarInner}
       </aside>
 
-      {/* Mobile off-canvas */}
-      <div className="md:hidden">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleToggle}
-          onKeyDown={handleKeyDown}
-          aria-label="Open sidebar"
-          aria-controls="dashboard-sidebar-drawer"
-          aria-expanded={open}
-          className="m-3"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        {open && (
-          <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-            <div
-              id="dashboard-sidebar-drawer"
-              className="absolute left-0 top-0 h-full w-72 bg-background p-2 shadow-2xl"
-            >
-              {SidebarInner}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Mobile off-canvas - removed to avoid conflicting with navbar menu */}
+      <div className="hidden" aria-hidden="true" />
     </>
   );
 };

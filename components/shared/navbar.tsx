@@ -28,6 +28,15 @@ const routes = [
   },
 ];
 
+// Dashboard-only destinations (used in mobile menu when signed in)
+const dashboardRoutes = [
+  { name: "Dashboard", path: "/dashboard" },
+  { name: "Create Day-in-Role", path: "/dayinrole/create" },
+  { name: "Interviews", path: "/interview" },
+  { name: "Usage & Limits", path: "/dashboard/usage" },
+  { name: "Subscription", path: "/subscription" },
+];
+
 export const Navbar = () => {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -136,8 +145,30 @@ export const Navbar = () => {
           <div id="mobile-menu" className="absolute left-0 right-0 top-14 border-t bg-background shadow-lg">
             <div className="px-4 py-3">
               <nav className="flex flex-col gap-2" aria-label="Mobile Navigation">
-                {routes.map((route) => {
-                  const link = (
+                {/* Signed-out: only public routes */}
+                <SignedOut>
+                  {routes
+                    .filter((r) => r.public)
+                    .map((route) => (
+                      <Link
+                        key={route.path}
+                        href={route.path}
+                        onClick={handleCloseMobile}
+                        className={cn(
+                          "rounded-md px-3 py-2 text-sm outline-none transition-colors hover:bg-muted/60",
+                          pathname === route.path ? "text-foreground bg-muted/60" : "text-foreground/80"
+                        )}
+                        tabIndex={0}
+                        aria-label={route.name}
+                      >
+                        {route.name}
+                      </Link>
+                    ))}
+                </SignedOut>
+
+                {/* Signed-in: Home + full dashboard destinations, no duplicates */}
+                <SignedIn>
+                  {[{ name: "Home", path: "/" }, ...dashboardRoutes].map((route) => (
                     <Link
                       key={route.path}
                       href={route.path}
@@ -151,10 +182,8 @@ export const Navbar = () => {
                     >
                       {route.name}
                     </Link>
-                  );
-                  if (route.public) return link;
-                  return <SignedIn key={route.path}>{link}</SignedIn>;
-                })}
+                  ))}
+                </SignedIn>
               </nav>
               <div className="mt-3 flex items-center justify-between">
                 <ModeToggle />
