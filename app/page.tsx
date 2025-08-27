@@ -7,6 +7,7 @@ import { Benefits } from '@/components/sections/Benefits'
 import { Footer } from '@/components/sections/Footer'
 import { Navbar } from '@/components/shared/navbar'
 import { useUser } from '@clerk/nextjs'
+import { About } from '@/components/sections/About'
 
 const HomePage = () => {
   const { isLoaded } = useUser();
@@ -24,6 +25,7 @@ const HomePage = () => {
     <div className="min-h-screen">
       <Navbar />
       <Hero />
+      <About />
       <Features />
       <HowItWorks />
       <Benefits />

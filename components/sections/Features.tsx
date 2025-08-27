@@ -37,7 +37,7 @@ const features = [
   {
     icon: Shield,
     title: "Reliable Insights",
-    description: "Trusted by thousands of job seekers for making informed career decisions.",
+    description: "Trusted by job seekers for making informed career decisions.",
     iconColor: "text-green-600 dark:text-green-400",
     area: "md:[grid-area:2/7/3/13] xl:[grid-area:2/1/3/5]"
   },

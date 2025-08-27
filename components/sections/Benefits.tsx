@@ -51,8 +51,8 @@ export const Benefits = () => {
     <section className="relative w-full py-12 md:py-24 lg:py-32 bg-background dark:bg-neutral-950 overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-purple-500/10 to-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-blue-500/10 to-green-500/10 blur-3xl" />
+        <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/10 blur-3xl" />
+        <div className="absolute -bottom-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-blue-500/10 to-green-500/10 blur-3xl" />
       </div>
 
       <div className="container max-w-screen-xl mx-auto px-4 md:px-6 relative z-10">
@@ -88,7 +88,7 @@ export const Benefits = () => {
             <motion.div 
               key={index} 
               variants={itemVariants}
-              className="flex items-start space-x-4 p-6 rounded-xl border border-border bg-background/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow duration-300"
+              className="flex items-start space-x-4 p-6 rounded-xl border border-border bg-background/10 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow duration-300"
             >
               <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <benefit.icon className="w-6 h-6 text-primary" />
@@ -114,7 +114,7 @@ export const Benefits = () => {
           whileInView="visible"
           viewport={{ once: true }}
         >
-          <div className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-green-500/10 rounded-2xl p-8 md:p-12 border border-border backdrop-blur-sm">
+          <div className="rounded-2xl p-8 md:p-12 border border-border backdrop-blur-sm">
             <h3 className="text-2xl md:text-3xl font-bold mb-4">
               Ready to Know Your Day in Role?
             </h3>
@@ -124,7 +124,7 @@ export const Benefits = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="min-w-[160px]">
                 <Link href={isAuthenticated ? "/dashboard" : "/sign-in"}>
-                  Start Free Trial
+                  Create Your First Day in Role
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="min-w-[160px]">
