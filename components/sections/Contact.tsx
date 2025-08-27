@@ -162,7 +162,7 @@ export const ContactSection: React.FC = () => {
                     </div>
                     <div className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-300" aria-label="Business information">
                       <p><span className="font-medium">Business:</span> Day in Role</p>
-                      <p><span className="font-medium">Owner:</span> Bartłomiej Całko</p>
+                      <p><span className="font-medium">Owner:</span> Bartlomiej Calko</p>
                     </div>
                     
                   </div>
