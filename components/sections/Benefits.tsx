@@ -98,10 +98,10 @@ export const Benefits = () => {
                 <p className="text-muted-foreground mb-3">
                   {benefit.description}
                 </p>
-                <div className="flex items-center space-x-2">
+                {/* <div className="flex items-center space-x-2">
                   <span className="text-2xl font-bold text-primary">{benefit.stat}</span>
                   <span className="text-sm text-muted-foreground">{benefit.statLabel}</span>
-                </div>
+                </div> */}
               </div>
             </motion.div>
           ))}
