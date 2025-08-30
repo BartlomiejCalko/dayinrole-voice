@@ -117,7 +117,7 @@ export const Features = () => {
             Why Choose Day in Role?
           </motion.h2>
           <motion.p 
-            className="max-w-[700px] mx-auto text-muted-foreground md:text-xl"
+            className="max-w-[700px] mx-auto md:text-xl text-gray-500 dark:text-gray-300"
             variants={itemVariants}
           >
             Discover what makes our platform the go-to solution for understanding your next career move.

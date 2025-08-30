@@ -73,7 +73,7 @@ export const Benefits = () => {
             className="max-w-[700px] mx-auto text-muted-foreground md:text-xl"
             variants={itemVariants}
           >
-            Join thousands of professionals who make smarter career decisions with Day in Role.
+            Join professionals who make smarter career decisions with Day in Role.
           </motion.p>
         </motion.div>
 
