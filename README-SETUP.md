@@ -23,14 +23,14 @@ The app automatically syncs subscription status from Clerk billing in the backgr
 ### 1. Configure Clerk Webhook
 
 #### Step 1: Get Your Webhook URL
-Your webhook endpoint is: `https://your-domain.com/api/clerk/webhook`
+Your webhook endpoint is: `https://dayinrole.net/api/clerk/webhook`
 
 #### Step 2: Set Up Webhook in Clerk Dashboard
 1. Go to your [Clerk Dashboard](https://dashboard.clerk.com)
 2. Select your application
 3. Navigate to **Webhooks** in the left sidebar
 4. Click **Add Endpoint**
-5. Enter your webhook URL: `https://your-domain.com/api/clerk/webhook`
+5. Enter your webhook URL: `https://dayinrole.net/api/clerk/webhook`
 6. Select the following events:
    - `user.created` (Essential)
    - `user.updated` (Recommended)

@@ -61,7 +61,7 @@ STRIPE_WEBHOOK_SECRET=whsec_... # Only needed if using direct Stripe webhooks
    - Configure your pricing table
 4. **Set up Webhooks**:
    - Go to Clerk Dashboard > Webhooks
-   - Add endpoint: `https://yourdomain.com/api/clerk/webhook`
+   - Add endpoint: `https://dayinrole.net/api/clerk/webhook`
    - Select events: `user.created`, `user.deleted`, `subscription.created`, `subscription.updated`
    - Copy webhook secret to your `.env.local`
 

@@ -34,7 +34,7 @@ curl https://your-domain.com/api/status
 ### **2. Update Clerk Webhook URL:**
 In your [Clerk Dashboard](https://dashboard.clerk.com):
 - Go to Webhooks
-- Change URL to: `https://your-domain.com/api/clerk/webhook-clean`
+- Change URL to: `https://dayinrole.net/api/clerk/webhook`
 - Select these events:
   - `user.created`
   - `user.updated` 
@@ -75,7 +75,7 @@ Once webhook is working, delete:
 
 ## 🔧 Your Webhook URL:
 ```
-https://your-domain.com/api/clerk/webhook-clean
+https://dayinrole.net/api/clerk/webhook
 ```
 
 ## 🧪 Test Endpoints:
