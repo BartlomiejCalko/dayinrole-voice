@@ -2,7 +2,7 @@
 
 ## ✅ What We Built:
 
-### **Complete Clean Webhook** (`/api/clerk/webhook-clean`)
+### **Webhook** (`/api/clerk/webhook`)
 Handles ALL necessary events:
 - ✅ `user.created` - Creates user + free subscription
 - ✅ `user.updated` - Updates user information
@@ -81,7 +81,7 @@ https://dayinrole.net/api/clerk/webhook
 ## 🧪 Test Endpoints:
 ```
 GET /api/status - Check user sync status
-POST /api/clerk/webhook-clean - Webhook handler
+POST /api/clerk/webhook - Webhook handler
 ```
 
 **Perfect! This is how webhooks should be built from day one.** 🎉 
