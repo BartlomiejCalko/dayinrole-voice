@@ -15,8 +15,8 @@ const footerLinks = {
   legal: [
     { name: "Contact", href: "/contact" },
     { name: "Support", href: "mailto:support@dayinrole.net" },
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
+    { name: "Privacy Policy", href: "/privacy-policy" },
+    { name: "Terms and Conditions", href: "/terms-and-conditions" },
     { name: "Cookie Policy", href: "/cookies" }
   ]
 };
