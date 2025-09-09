@@ -373,7 +373,7 @@ const DashboardPage = () => {
               </Button>
             </div>
             
-            <div className="flex flex-wrap gap-4 max-lg:flex-col w-full items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full items-stretch">
               {loadingSamples ? (
                 <div className="flex items-center justify-center w-full py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
