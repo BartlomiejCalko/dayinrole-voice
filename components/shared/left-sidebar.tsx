@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/shared/mode-toggle";
 import { cn } from "@/lib/utils";
-import { Home, Layers, MessageSquare, CreditCard, HelpCircle, BarChart3, Settings } from "lucide-react";
+import { Home, Layers, MessageSquare, CreditCard, BarChart3 } from "lucide-react";
 
 const routes = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -18,9 +18,18 @@ const routes = [
   
 ];
 
+const toPlanLabel = (planId: string, isAdmin?: boolean) => {
+  if (isAdmin) return "Admin";
+  const v = (planId || "free").toLowerCase();
+  if (v === "start") return "Start Plan";
+  if (v === "pro") return "Pro Plan";
+  return "Free Plan";
+};
+
 const LeftSidebar = () => {
   const pathname = usePathname();
-  const [plan, setPlan] = useState<string>("free");
+  const [planId, setPlanId] = useState<string>("free");
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [limits, setLimits] = useState<SubscriptionLimits | null>(null);
 
   useEffect(() => {
@@ -29,7 +38,9 @@ const LeftSidebar = () => {
         const res = await fetch("/api/subscription/status");
         if (!res.ok) return;
         const data = await res.json();
-        setPlan(data.subscription?.plan_id || "free");
+        // Prefer normalized planId field returned by the API; fallback to subscription.plan_id
+        setPlanId(data.planId || data.subscription?.plan_id || "free");
+        setIsAdmin(!!data.isAdmin);
         setLimits(data.limits || null);
       } catch {}
     };
@@ -42,7 +53,7 @@ const LeftSidebar = () => {
         <div>
           <div className="text-sm text-muted-foreground">Plan</div>
           <div className="mt-1 flex items-center gap-2">
-            <Badge variant="secondary" className="capitalize">{plan}</Badge>
+            <Badge variant="secondary" className="capitalize">{toPlanLabel(planId, isAdmin)}</Badge>
             {limits && (
               <span className="text-xs text-muted-foreground">
                 {limits.dayInRoleUsed}/{limits.dayInRoleLimit} DiR · {limits.interviewsUsed}/{limits.interviewLimit} Int

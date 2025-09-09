@@ -2,6 +2,13 @@ import { createServiceClient } from '@/utils/supabase/server';
 import { SUBSCRIPTION_PLANS } from '@/constants/subscription-plans';
 import { getIsAdminByUserId } from '@/lib/auth/roles';
 
+const normalizePlanId = (raw?: string | null): 'free' | 'start' | 'pro' => {
+  const v = (raw || '').toString().toLowerCase();
+  if (v === 'start' || v.includes('start')) return 'start';
+  if (v === 'pro' || v.includes('pro')) return 'pro';
+  return 'free';
+};
+
 export const getUserSubscriptionStatus = async (userId: string): Promise<{
   isFreePlan: boolean;
   planId: string;
@@ -38,6 +45,17 @@ export const getUserSubscriptionStatus = async (userId: string): Promise<{
       };
     }
 
+    // Normalize plan id and opportunistically fix DB if needed
+    const normalizedPlanId = normalizePlanId(subscription.plan_id as any);
+    if (normalizedPlanId !== subscription.plan_id) {
+      try {
+        await supabase
+          .from('subscriptions')
+          .update({ plan_id: normalizedPlanId, updated_at: new Date().toISOString() })
+          .eq('id', subscription.id);
+      } catch {}
+    }
+
     // Get user's current usage
     const { data: usage } = await supabase
       .from('usage_tracking')
@@ -51,9 +69,9 @@ export const getUserSubscriptionStatus = async (userId: string): Promise<{
       interviews_used: 0
     };
 
-    // Find the subscription plan
-    const plan = SUBSCRIPTION_PLANS.find(p => p.id === subscription.plan_id);
-    const isFreePlan = subscription.plan_id === 'free';
+    // Find the subscription plan based on normalized id
+    const plan = SUBSCRIPTION_PLANS.find(p => p.id === normalizedPlanId);
+    const isFreePlan = normalizedPlanId === 'free';
 
     const limits: SubscriptionLimits = {
       dayInRoleLimit: plan?.dayInRoleLimit || 0,
@@ -67,7 +85,7 @@ export const getUserSubscriptionStatus = async (userId: string): Promise<{
 
     return {
       isFreePlan,
-      planId: subscription.plan_id,
+      planId: normalizedPlanId,
       subscription,
       limits
     };
