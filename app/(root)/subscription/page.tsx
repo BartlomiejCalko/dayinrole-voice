@@ -8,21 +8,25 @@ import { SubscriptionManagement } from '@/components/subscription/SubscriptionMa
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Check, RefreshCw } from 'lucide-react';
+import { CheckCircle, Check } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { SubscriptionPlans } from '@/components/subscription/SubscriptionPlans';
 
 const SubscriptionPageContent = () => {
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(false);
-  const [autoSyncing, setAutoSyncing] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
 
   // Handle success/cancel from Clerk billing
   useEffect(() => {
+    if (!searchParams) return;
+    
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
+    const openCheckout = searchParams.get('open_checkout');
 
     if (success === 'true') {
       toast.success('Subscription activated successfully!');
@@ -37,7 +41,13 @@ const SubscriptionPageContent = () => {
       toast.error('Payment was cancelled.');
       // Clear URL parameters
       window.history.replaceState({}, '', '/subscription');
+    } else if (openCheckout === 'true') {
+      // Otwórz checkout
+      setShowCheckout(true);
+      // Wyczyść parametry URL
+      window.history.replaceState({}, '', '/subscription');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const fetchSubscription = async () => {
@@ -61,49 +71,12 @@ const SubscriptionPageContent = () => {
     }
   };
 
-  // Automatic background sync from Clerk - runs silently
-  const backgroundSyncFromClerk = async () => {
-    if (!user) return;
-
-    try {
-      setAutoSyncing(true);
-      console.log('Running automatic background sync from Clerk...');
-      
-      const response = await fetch('/api/subscription/sync-clerk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        console.log('Background sync successful:', data.planId);
-        // Silently refresh subscription status
-        await fetchSubscription();
-      } else {
-        console.log('Background sync failed:', data.error);
-      }
-    } catch (error) {
-      console.error('Error in background sync:', error);
-    } finally {
-      setAutoSyncing(false);
-    }
-  };
-
   useEffect(() => {
     if (user && isLoaded) {
       // First fetch current subscription
       fetchSubscription();
-      
-      // 🚨 TEMPORARILY DISABLED AUTO-SYNC - it was overriding manual updates
-      // Then automatically sync from Clerk in background (silent)
-      // This ensures subscription is always up-to-date
-      // setTimeout(() => {
-      //   backgroundSyncFromClerk();
-      // }, 1000); // Small delay to avoid race conditions
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isLoaded]);
 
   // Show loading only when we're checking user authentication state
@@ -137,14 +110,6 @@ const SubscriptionPageContent = () => {
             ? 'Check your usage, manage your plan and get access to all Day in Role features.'
             : 'Choose the perfect plan to get detailed day-in-role insights for your next career move. Start today and unlock your career potential.'}
         </p>
-        
-        {/* Subtle auto-sync indicator */}
-        {autoSyncing && (
-          <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
-            <RefreshCw className="w-4 h-4 animate-spin" />
-            <span>Updating subscription status...</span>
-          </div>
-        )}
         
         {/* Trust indicators */}
         <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground">
@@ -206,7 +171,7 @@ const SubscriptionPageContent = () => {
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <h3 className="font-semibold mb-2 text-blue-800 dark:text-blue-200">💡 Ready to Get Started?</h3>
               <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-                You're currently on the free plan. Choose a plan below to start creating your own Day-in-Role experiences.
+                You&apos;re currently on the free plan. Choose a plan below to start creating your own Day-in-Role experiences.
               </p>
               <Button 
                 variant="default" 
@@ -253,6 +218,44 @@ const SubscriptionPageContent = () => {
           }
         />
       </div>
+
+
+      
+      {/* Clerk PricingTable - pokazywany tylko gdy user klika Subscribe */}
+     {/*  {showCheckout && user && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={() => setShowCheckout(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors z-10"
+              aria-label="Close checkout"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            <div className="p-8">
+              <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Complete Your Subscription
+              </h2>
+              
+              <PricingTable 
+                newSubscriptionRedirectUrl="/subscription?success=true"
+                fallback={
+                  <div className="text-center py-12">
+                    <div className="animate-pulse">
+                      <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    </div>
+                  </div>
+                }
+              />
+            </div>
+          </div>
+        </div>
+      )}
+ */}
+
 
 
 
