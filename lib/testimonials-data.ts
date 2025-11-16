@@ -4,20 +4,20 @@ export const testimonials: Testimonial[] = [
   {
     quote: "",
     name: "Call Center Agent?",
-    designation: "Who you gonna call?",
-    src: "/testimonials/person1.jpg",
+    designation: "Who are you going to call?",
+    src: "/testimonials/callc.webp",
   },
   {
     quote: "",
     name: "Backend Developer?",
     designation: "Which stack will I be using?",
-    src: "/testimonials/person2.jpg",
+    src: "/testimonials/it.webp",
   },
   {
     quote: "",
     name: "Product Manager?",
-    designation: "Product Manager at InnovateTech",
-    src: "/testimonials/person3.jpg",
+    designation: "What product are we launching next?",
+    src: "/testimonials/productman.webp",
   },
 ]; 
 
