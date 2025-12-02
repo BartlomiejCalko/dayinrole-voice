@@ -13,7 +13,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
       <main className='root-layout'>
         <div className="flex">
           {userId && <DashboardSidebar />}
-          <section className="flex min-h-screen flex-1 flex-col px-4 sm:px-6 lg:px-10 pb-2 pt-6 ">
+          <section className={`flex min-h-screen flex-1 flex-col px-4 sm:px-6 lg:px-10 pb-2 pt-6 ${userId ? 'md:ml-64' : ''}`}>
             <div className="mx-auto w-full max-w-screen-2xl">{children}</div>
           </section>
         </div>
