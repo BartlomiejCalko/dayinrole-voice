@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
         console.log('Language instruction:', languageInstruction); // Debug log
 
         const { text: dayInRoleData } = await generateText({
-            model: google('gemini-2.0-flash-001'),
+            //model: google('gemini-2.0-flash-001'),
+            model: google('gemini-1.5-flash'),
             maxTokens: 8000, // Increased token limit to ensure complete responses
             prompt: `${languageInstruction}
 
