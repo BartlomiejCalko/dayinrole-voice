@@ -1,5 +1,5 @@
 import { generateText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { openai } from '@ai-sdk/openai';
 import { getRandomInterviewCover } from '@/lib/utils';
 import { createServiceClient } from '@/utils/supabase/server';
 import { scrapeJobOffer, isJobUrl } from '@/lib/scrapeJobOffer';
@@ -75,9 +75,10 @@ export async function POST(request: NextRequest) {
         console.log('Language instruction:', languageInstruction); // Debug log
 
         const { text: dayInRoleData } = await generateText({
-            model: google('gemini-2.0-flash'),
+            //model: google('gemini-2.0-flash'),
+            model: openai('gpt-4.1-mini'),
             //model: google('gemini-1.5-flash'),
-            maxTokens: 8000, // Increased token limit to ensure complete responses
+            maxTokens: 4000, // Increased token limit to ensure complete responses
             prompt: `${languageInstruction}
 
 ${language === 'original' ? `
