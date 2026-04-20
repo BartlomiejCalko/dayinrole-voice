@@ -1,148 +1,104 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { containerVariants, itemVariants } from "@/lib/animations";
-import { GlowingEffect } from "@/components/ui/glowing-effect";
-import { cn } from "@/lib/utils";
-import { 
-  Zap, 
-  Target, 
-  Clock, 
-  Shield, 
-  Users
-} from "lucide-react";
+import { Zap, Target, Clock, Shield, Users, Layers } from "lucide-react";
 
 const features = [
   {
     icon: Zap,
-    title: "Instant Analysis",
-    description: "Get detailed day-in-role insights within seconds of pasting any job description.",
-    iconColor: "text-yellow-600 dark:text-yellow-400",
-    area: "md:[grid-area:1/1/2/7] xl:[grid-area:1/1/2/5]"
+    title: "Instant analysis",
+    description:
+      "Paste a job description and get a complete day-in-role breakdown within seconds. No forms, no waiting.",
   },
   {
     icon: Target,
-    title: "Accurate Predictions",
-    description: "AI-powered analysis based on real industry data and job market trends.",
-    iconColor: "text-red-600 dark:text-red-400",
-    area: "md:[grid-area:1/7/2/13] xl:[grid-area:1/5/2/9]"
+    title: "Accurate predictions",
+    description:
+      "AI-powered analysis trained on thousands of real job postings and industry patterns across roles and levels.",
   },
   {
     icon: Clock,
-    title: "Save Time",
-    description: "Skip hours of research and get straight to understanding your potential role.",
-    iconColor: "text-blue-600 dark:text-blue-400",
-    area: "md:[grid-area:2/1/3/7] xl:[grid-area:1/9/3/13]"
+    title: "Save hours of research",
+    description:
+      "Skip the Glassdoor rabbit holes. Get straight to understanding what your day-to-day would actually look like.",
   },
   {
     icon: Shield,
-    title: "Reliable Insights",
-    description: "Trusted by job seekers for making informed career decisions.",
-    iconColor: "text-green-600 dark:text-green-400",
-    area: "md:[grid-area:2/7/3/13] xl:[grid-area:2/1/3/5]"
+    title: "Reliable insights",
+    description:
+      "Grounded in the actual job posting — not generic advice. Every output reflects what the specific company wrote.",
   },
   {
     icon: Users,
-    title: "Real Scenarios",
-    description: "Understand actual daily tasks, challenges, and responsibilities you'll face.",
-    iconColor: "text-purple-600 dark:text-purple-400",
-    area: "md:[grid-area:3/1/4/13] xl:[grid-area:2/5/3/9]"
-  }
+    title: "Real scenarios",
+    description:
+      "Understand the meetings you'll sit in, the stakeholders you'll manage, and the pressure points of the role.",
+  },
+  {
+    icon: Layers,
+    title: "Interview preparation",
+    description:
+      "Generate tailored interview questions with sample answers that reflect what recruiters actually expect for this role.",
+  },
 ];
-
-interface FeatureItemProps {
-  area: string;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-  iconColor: string;
-}
-
-const FeatureItem = ({ area, icon: Icon, title, description, iconColor }: FeatureItemProps) => {
-  return (
-    <motion.li 
-      className={cn("min-h-[14rem] list-none", area)}
-      variants={itemVariants}
-    >
-      <div className="relative h-full rounded-[1.25rem] border-[0.75px] border-border p-2 md:rounded-[1.5rem] md:p-3">
-        <GlowingEffect
-          spread={40}
-          glow={true}
-          disabled={false}
-          proximity={64}
-          inactiveZone={0.01}
-          borderWidth={3}
-        />
-        <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-xl border-[0.75px] bg-background/80 backdrop-blur-sm p-6 shadow-sm dark:shadow-[0px_0px_27px_0px_rgba(45,45,45,0.3)] md:p-6">
-          <div className="relative flex flex-1 flex-col justify-between gap-3">
-            <div className="w-fit rounded-lg border-[0.75px] border-border bg-muted p-3">
-              <Icon className={cn("h-5 w-5", iconColor)} />
-            </div>
-            <div className="space-y-3">
-              <h3 className="pt-0.5 text-xl leading-[1.375rem] font-semibold font-sans tracking-[-0.04em] md:text-2xl md:leading-[1.875rem] text-balance text-foreground">
-                {title}
-              </h3>
-              <p className="font-sans text-sm leading-[1.125rem] md:text-base md:leading-[1.375rem] text-muted-foreground">
-                {description}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.li>
-  );
-};
 
 export const Features = () => {
   return (
-    <section className="relative w-full py-12 md:py-24 lg:py-32 bg-background dark:bg-neutral-950 overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-purple-500/10 to-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-blue-500/10 to-green-500/10 blur-3xl" />
-      </div>
-
-      <div className="container max-w-screen-xl mx-auto px-4 md:px-6 relative z-10">
+    <section
+      id="features"
+      className="relative w-full py-20 md:py-28"
+      aria-label="Features"
+    >
+      <div className="container max-w-screen-xl mx-auto px-4 md:px-6">
+        {/* Section header */}
         <motion.div
-          className="text-center mb-12"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
+          className="max-w-2xl mb-14"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <motion.h2 
-            className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent"
-            variants={itemVariants}
-          >
-            Why Choose Day in Role?
-          </motion.h2>
-          <motion.p 
-            className="max-w-[700px] mx-auto md:text-xl text-gray-500 dark:text-gray-300"
-            variants={itemVariants}
-          >
-            Discover what makes our platform the go-to solution for understanding your next career move.
-          </motion.p>
+          <p className="text-xs font-semibold tracking-widest text-violet-400 uppercase mb-4">
+            Features
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-[1.12] mb-4">
+            Everything you need to
+            <br />
+            evaluate any role
+          </h2>
+          <p className="text-neutral-500 text-base leading-relaxed">
+            From a realistic daily schedule to interview preparation — all from a single job posting.
+          </p>
         </motion.div>
 
-        <motion.ul
-          className="grid grid-cols-1 grid-rows-none gap-4 md:grid-cols-12 md:grid-rows-4 lg:gap-4 xl:max-h-[40rem] xl:grid-rows-2"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          {features.map((feature, index) => (
-            <FeatureItem
-              key={index}
-              area={feature.area}
-              icon={feature.icon}
-              title={feature.title}
-              description={feature.description}
-              iconColor={feature.iconColor}
-            />
-          ))}
-        </motion.ul>
+        {/* Feature grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.05] rounded-xl overflow-hidden border border-white/[0.05]">
+          {features.map((feature, i) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={i}
+                className="bg-[#080808] p-6 md:p-7 hover:bg-white/[0.02] transition-colors duration-200 group"
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.06, ease: "easeOut" }}
+              >
+                <div className="w-9 h-9 rounded-lg border border-white/[0.08] bg-white/[0.04] flex items-center justify-center mb-5 group-hover:border-white/[0.14] transition-colors duration-200">
+                  <Icon
+                    className="h-4 w-4 text-neutral-400 group-hover:text-white transition-colors duration-200"
+                    aria-hidden="true"
+                  />
+                </div>
+                <h3 className="text-white font-semibold text-sm mb-2 tracking-tight">
+                  {feature.title}
+                </h3>
+                <p className="text-neutral-600 text-sm leading-relaxed">{feature.description}</p>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
-}; 
+};

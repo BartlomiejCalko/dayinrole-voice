@@ -1,119 +1,106 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { itemVariants } from "@/lib/animations";
 import Image from "next/image";
 
 const footerLinks = {
-  navigation: [
-    { name: "Features", href: "#features" },
-    { name: "How it Works", href: "#how-it-works" },
+  product: [
+    { name: "Features", href: "/#features" },
+    { name: "How it works", href: "/#how-it-works" },
     { name: "Pricing", href: "/subscription" },
-    { name: "Dashboard", href: "/dashboard" }
+    { name: "Dashboard", href: "/dashboard" },
   ],
   legal: [
-    { name: "Contact", href: "/contact" },
-    { name: "Support", href: "mailto:support@dayinrole.net" },
     { name: "Privacy Policy", href: "/privacy-policy" },
-    { name: "Terms and Conditions", href: "/terms-and-conditions" },
-    { name: "Cookie Policy", href: "/cookies" }
-  ]
+    { name: "Terms of Service", href: "/terms-and-conditions" },
+    { name: "Cookie Policy", href: "/cookies" },
+    { name: "Contact", href: "/contact" },
+  ],
 };
 
 export const Footer = () => {
   return (
-    <footer className="w-full bg-background dark:bg-neutral-950 border-t border-gray-200 dark:border-neutral-800">
-      <div className="container max-w-screen-xl mx-auto px-4 md:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Brand Section */}
-          <motion.div 
-            className="md:col-span-1"
-            variants={itemVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <Link href="/" className="flex items-center mb-4">
-              <Image src="/logo1.svg" alt="Day in Role logo" width={196} height={101} className="h-4 w-auto" />
-              <span className="font-bold">dayinrole</span>
+    <footer className="w-full border-t border-white/[0.06] bg-[#080808]" role="contentinfo">
+      <div className="container max-w-screen-xl mx-auto px-4 md:px-6 py-12 md:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-2">
+            <Link href="/" className="inline-flex items-center gap-2 mb-4" aria-label="dayinrole home">
+              <Image
+                src="/logo1.svg"
+                alt="dayinrole logo"
+                width={196}
+                height={101}
+                className="h-4 w-auto opacity-70"
+              />
+              <span className="text-sm font-semibold text-white tracking-tight">dayinrole</span>
             </Link>
-            <p className="text-gray-500 dark:text-gray-400 max-w-sm">
-              Understand what your next job will really be like. Get detailed day-in-role insights for any position.
+            <p className="text-neutral-600 text-sm leading-relaxed max-w-xs">
+              Understand what your next job will really be like — before you accept the offer.
             </p>
-          </motion.div>
+          </div>
 
-          {/* Navigation Links */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <h3 className="font-semibold text-sm uppercase tracking-wider mb-4">Navigation</h3>
-            <ul className="space-y-3">
-              {footerLinks.navigation.map((link) => (
-                <li key={link.name}>
-                  <Link 
+          {/* Product links */}
+          <div>
+            <h3 className="text-xs font-semibold tracking-widest text-neutral-500 uppercase mb-4">
+              Product
+            </h3>
+            <ul className="space-y-2.5 list-none" role="list">
+              {footerLinks.product.map((link) => (
+                <li key={link.name} className="list-none">
+                  <Link
                     href={link.href}
-                    className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors duration-200"
+                    className="text-neutral-600 text-sm hover:text-white transition-colors duration-150"
+                    aria-label={link.name}
                   >
                     {link.name}
                   </Link>
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
-          {/* Legal & Contact Links */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <h3 className="font-semibold text-sm uppercase tracking-wider mb-4">Legal & Contact</h3>
-            <ul className="space-y-3">
+          {/* Legal links */}
+          <div>
+            <h3 className="text-xs font-semibold tracking-widest text-neutral-500 uppercase mb-4">
+              Legal
+            </h3>
+            <ul className="space-y-2.5 list-none" role="list">
               {footerLinks.legal.map((link) => (
-                <li key={link.name}>
-                  <Link 
+                <li key={link.name} className="list-none">
+                  <Link
                     href={link.href}
-                    className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors duration-200"
+                    className="text-neutral-600 text-sm hover:text-white transition-colors duration-150"
+                    aria-label={link.name}
                   >
                     {link.name}
                   </Link>
                 </li>
               ))}
-              <li>
+              <li className="list-none">
                 <button
                   type="button"
                   onClick={() => window.dispatchEvent(new Event("open-cookie-settings"))}
-                  className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors duration-200 underline"
+                  className="text-neutral-600 text-sm hover:text-white transition-colors duration-150 focus:outline-none focus-visible:underline"
                   aria-label="Open cookie settings"
                 >
-                  Cookie Settings
+                  Cookie settings
                 </button>
               </li>
             </ul>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Bottom Section */}
-        <motion.div 
-          className="flex justify-between border-t border-gray-200 dark:border-neutral-800 mt-12 pt-8 text-center"
-          variants={itemVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
+        {/* Bottom bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-8 border-t border-white/[0.06]">
+          <p className="text-neutral-700 text-xs">
             © {new Date().getFullYear()} Day in Role. All rights reserved.
           </p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
-            Made with ❤️ for job seekers
+          <p className="text-neutral-700 text-xs">
+            Built for job seekers who want clarity, not surprises.
           </p>
-        </motion.div>
+        </div>
       </div>
     </footer>
   );
-}; 
+};

@@ -1,46 +1,32 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { containerVariants, itemVariants } from "@/lib/animations";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { 
-  Brain, 
-  DollarSign, 
-  Calendar, 
-  Award 
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
-const benefits = [
+const outcomes = [
   {
-    icon: Brain,
-    title: "Make Informed Decisions",
-    description: "Understand exactly what you're signing up for before accepting any job offer.",
     stat: "95%",
-    statLabel: "Better job satisfaction"
+    label: "Better job fit decisions",
+    description: "Users report feeling significantly more confident about accepting a role after reviewing their Day-in-Role.",
   },
   {
-    icon: DollarSign,
-    title: "Negotiate Better",
-    description: "Know the real scope of work to negotiate fair compensation and benefits.",
     stat: "23%",
-    statLabel: "Higher salary offers"
+    label: "Higher salary negotiation",
+    description: "Knowing the real scope of work helps you negotiate fair compensation from an informed position.",
   },
   {
-    icon: Calendar,
-    title: "Prepare Effectively",
-    description: "Start your new role with confidence knowing what to expect from day one.",
     stat: "87%",
-    statLabel: "Faster onboarding"
+    label: "Faster onboarding",
+    description: "Starting a role knowing what to expect means less ramp-up time and fewer unpleasant surprises.",
   },
   {
-    icon: Award,
-    title: "Career Growth",
-    description: "Choose roles that align with your career goals and skill development plans.",
-    stat: "76%",
-    statLabel: "Career advancement"
-  }
+    stat: "3×",
+    label: "Interview confidence",
+    description: "Walk into interviews with role-specific questions and answers already prepared, not generic advice.",
+  },
 ];
 
 export const Benefits = () => {
@@ -48,88 +34,104 @@ export const Benefits = () => {
   const isAuthenticated = !!user;
 
   return (
-    <section className="relative w-full py-12 md:py-24 lg:py-32 bg-background dark:bg-neutral-950 overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-blue-500/10 to-green-500/10 blur-3xl" />
-      </div>
-
-      <div className="container max-w-screen-xl mx-auto px-4 md:px-6 relative z-10">
+    <section
+      className="relative w-full py-20 md:py-28 border-t border-white/[0.06]"
+      aria-label="Outcomes and benefits"
+    >
+      <div className="container max-w-screen-xl mx-auto px-4 md:px-6">
+        {/* Section header */}
         <motion.div
-          className="text-center mb-12"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
+          className="max-w-2xl mb-16"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <motion.h2 
-            className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent"
-            variants={itemVariants}
-          >
-            Transform Your Job Search
-          </motion.h2>
-          <motion.p 
-            className="max-w-[700px] mx-auto text-muted-foreground md:text-xl"
-            variants={itemVariants}
-          >
-            Join professionals who make smarter career decisions with Day in Role.
-          </motion.p>
+          <p className="text-xs font-semibold tracking-widest text-violet-400 uppercase mb-4">
+            Why it matters
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-[1.12] mb-4">
+            Make smarter career
+            <br />
+            decisions, not lucky ones
+          </h2>
+          <p className="text-neutral-500 text-base leading-relaxed">
+            Job seekers who understand a role before accepting it perform better, stay longer,
+            and negotiate from a stronger position.
+          </p>
         </motion.div>
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          {benefits.map((benefit, index) => (
-            <motion.div 
-              key={index} 
-              variants={itemVariants}
-              className="flex items-start space-x-4 p-6 rounded-xl border border-border bg-background/10 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow duration-300"
+        {/* Outcomes grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.05] rounded-xl overflow-hidden border border-white/[0.05] mb-16">
+          {outcomes.map((item, i) => (
+            <motion.div
+              key={i}
+              className="bg-[#080808] p-6 md:p-7 hover:bg-white/[0.02] transition-colors duration-200"
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.07, ease: "easeOut" }}
             >
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <benefit.icon className="w-6 h-6 text-primary" />
+              <div className="text-3xl font-bold text-white tracking-tight tabular-nums mb-2">
+                {item.stat}
               </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
-                <p className="text-muted-foreground mb-3">
-                  {benefit.description}
-                </p>
-                {/* <div className="flex items-center space-x-2">
-                  <span className="text-2xl font-bold text-primary">{benefit.stat}</span>
-                  <span className="text-sm text-muted-foreground">{benefit.statLabel}</span>
-                </div> */}
-              </div>
+              <div className="text-sm font-medium text-neutral-300 mb-3">{item.label}</div>
+              <p className="text-neutral-600 text-xs leading-relaxed">{item.description}</p>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
 
+        {/* CTA box */}
         <motion.div
-          className="text-center"
-          variants={itemVariants}
-          initial="hidden"
-          whileInView="visible"
+          className="relative rounded-xl border border-white/[0.08] overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <div className="rounded-2xl p-8 md:p-12 border border-border backdrop-blur-sm">
-            <h3 className="text-2xl md:text-3xl font-bold mb-4">
-              Ready to Know Your Day in Role?
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-[600px] mx-auto">
-              Stop guessing what your new job will be like. Get detailed insights and make confident career decisions today.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="min-w-[160px]">
-                <Link href={isAuthenticated ? "/dashboard" : "/sign-in"}>
-                  Create Your First Day in Role
+          {/* Background glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(ellipse 60% 80% at 50% 100%, rgba(124,58,237,0.12) 0%, transparent 70%)",
+            }}
+            aria-hidden="true"
+          />
+
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 px-8 py-10 md:px-12 md:py-12">
+            <div className="max-w-xl text-center md:text-left">
+              <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight mb-3">
+                Ready to know your day in role?
+              </h3>
+              <p className="text-neutral-500 text-sm leading-relaxed">
+                Stop guessing. Paste a job description and get your personalized preview in under 30 seconds.
+                Free to try.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+              <Button
+                asChild
+                size="lg"
+                className="rounded-lg px-6 h-11 font-medium bg-white text-black hover:bg-white/90 w-full sm:w-auto"
+              >
+                <Link
+                  href={isAuthenticated ? "/dayinrole/create" : "/sign-in"}
+                  aria-label="Create your first Day-in-Role"
+                >
+                  Create Day-in-Role
+                  <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden="true" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="min-w-[160px]">
-                <Link href="/subscription">
-                  View Pricing
+              <Button
+                asChild
+                variant="ghost"
+                size="lg"
+                className="rounded-lg px-6 h-11 font-medium text-neutral-400 hover:text-white border border-white/[0.10] hover:border-white/[0.20] hover:bg-white/[0.04] w-full sm:w-auto"
+              >
+                <Link href="/subscription" aria-label="View pricing">
+                  View pricing
                 </Link>
               </Button>
             </div>
@@ -138,4 +140,4 @@ export const Benefits = () => {
       </div>
     </section>
   );
-}; 
+};
